@@ -1,31 +1,8 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.util;
+
+import java.util.UUID;
+import java.util.stream.Stream;
 
 import mage.MageObject;
 import mage.Mana;
@@ -40,18 +17,18 @@ import mage.game.permanent.Permanent;
 import mage.game.permanent.token.Token;
 import mage.util.functions.CopyTokenFunction;
 
-import java.util.UUID;
-
 /**
  * @author nantuko
  */
 public final class CardUtil {
 
-
     private static final String SOURCE_EXILE_ZONE_TEXT = "SourceExileZone";
 
     static final String[] numberStrings = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-            "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"};
+        "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"};
+
+    static final String[] ordinalStrings = {"first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eightth", "ninth",
+        "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth"};
 
     /**
      * Increase spell or ability cost to be paid.
@@ -132,7 +109,6 @@ public final class CardUtil {
         return adjustedCost;
     }
 
-
     public static void reduceCost(SpellAbility spellAbility, ManaCosts<ManaCost> manaCostsToReduce) {
         adjustCost(spellAbility, manaCostsToReduce, true);
     }
@@ -153,8 +129,8 @@ public final class CardUtil {
      *
      * @param spellAbility
      * @param manaCostsToReduce costs to reduce
-     * @param convertToGeneric  colored mana does reduce generic mana if no
-     *                          appropriate colored mana is in the costs included
+     * @param convertToGeneric colored mana does reduce generic mana if no
+     * appropriate colored mana is in the costs included
      */
     public static void adjustCost(SpellAbility spellAbility, ManaCosts<ManaCost> manaCostsToReduce, boolean convertToGeneric) {
         ManaCosts<ManaCost> previousCost = spellAbility.getManaCostsToPay();
@@ -339,7 +315,7 @@ public final class CardUtil {
      *
      * @param number number to convert to text
      * @param forOne if the number is 1, this string will be returnedinstead of
-     *               "one".
+     * "one".
      * @return
      */
     public static String numberToText(int number, String forOne) {
@@ -366,6 +342,13 @@ public final class CardUtil {
         return number;
     }
 
+    public static String numberToOrdinalText(int number) {
+        if (number >= 1 && number < 21) {
+            return ordinalStrings[number - 1];
+        }
+        return Integer.toString(number) + "th";
+    }
+
     public static String replaceSourceName(String message, String sourceName) {
         message = message.replace("{this}", sourceName);
         message = message.replace("{source}", sourceName);
@@ -373,38 +356,39 @@ public final class CardUtil {
     }
 
     public static boolean checkNumeric(String s) {
+        return s.chars().allMatch(Character::isDigit);
 
-        for (int i = 0; i < s.length(); i++) {
-            if (!Character.isDigit(s.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
     }
 
-
     /**
-     * Parse card number as int (support base [123] and alternative numbers [123b]).
+     * Parse card number as int (support base [123] and alternative numbers
+     * [123b], [U123]).
      *
      * @param cardNumber origin card number
      * @return int
      */
-    public static int parseCardNumberAsInt(String cardNumber){
+    public static int parseCardNumberAsInt(String cardNumber) {
 
-        if (cardNumber.isEmpty()){ throw new IllegalArgumentException("Card number is empty.");}
+        if (cardNumber.isEmpty()) {
+            throw new IllegalArgumentException("Card number is empty.");
+        }
 
-        if(Character.isDigit(cardNumber.charAt(cardNumber.length() - 1)))
-        {
-            return Integer.parseInt(cardNumber);
-        }else{
+        if (!Character.isDigit(cardNumber.charAt(0))) {
+            // U123
+            return Integer.parseInt(cardNumber.substring(1, cardNumber.length()));
+        } else if (!Character.isDigit(cardNumber.charAt(cardNumber.length() - 1))) {
+            // 123b
             return Integer.parseInt(cardNumber.substring(0, cardNumber.length() - 1));
+        } else {
+            // 123
+            return Integer.parseInt(cardNumber);
         }
     }
 
     /**
      * Creates and saves a (card + zoneChangeCounter) specific exileId.
      *
-     * @param game   the current game
+     * @param game the current game
      * @param source source ability
      * @return the specific UUID
      */
@@ -439,9 +423,9 @@ public final class CardUtil {
      * be specific to a permanent instance. So they won't match, if a permanent
      * was e.g. exiled and came back immediately.
      *
-     * @param text   short value to describe the value
+     * @param text short value to describe the value
      * @param cardId id of the card
-     * @param game   the game
+     * @param game the game
      * @return
      */
     public static String getCardZoneString(String text, UUID cardId, Game game) {
@@ -460,9 +444,9 @@ public final class CardUtil {
     public static String getObjectZoneString(String text, MageObject mageObject, Game game) {
         int zoneChangeCounter = 0;
         if (mageObject instanceof Permanent) {
-            zoneChangeCounter = ((Permanent) mageObject).getZoneChangeCounter(game);
+            zoneChangeCounter = mageObject.getZoneChangeCounter(game);
         } else if (mageObject instanceof Card) {
-            zoneChangeCounter = ((Card) mageObject).getZoneChangeCounter(game);
+            zoneChangeCounter = mageObject.getZoneChangeCounter(game);
         }
         return getObjectZoneString(text, mageObject.getId(), game, zoneChangeCounter, false);
     }
@@ -512,9 +496,9 @@ public final class CardUtil {
     public static int addWithOverflowCheck(int base, int increment) {
         long result = ((long) base) + increment;
         if (result > Integer.MAX_VALUE) {
-             return Integer.MAX_VALUE;
+            return Integer.MAX_VALUE;
         } else if (result < Integer.MIN_VALUE) {
-             return Integer.MIN_VALUE;
+            return Integer.MIN_VALUE;
         }
         return base + increment;
     }
@@ -522,11 +506,28 @@ public final class CardUtil {
     public static int subtractWithOverflowCheck(int base, int decrement) {
         long result = ((long) base) - decrement;
         if (result > Integer.MAX_VALUE) {
-             return Integer.MAX_VALUE;
+            return Integer.MAX_VALUE;
         } else if (result < Integer.MIN_VALUE) {
-             return Integer.MIN_VALUE;
+            return Integer.MIN_VALUE;
         }
         return base - decrement;
     }
 
+    public static String createObjectRealtedWindowTitle(Ability source, Game game, String textSuffix) {
+        String title;
+        if (source != null) {
+            MageObject sourceObject = game.getObject(source.getSourceId());
+            if (sourceObject != null) {
+                title = sourceObject.getIdName()
+                        + " [" + source.getSourceObjectZoneChangeCounter() + "]"
+                        + (textSuffix == null ? "" : " " + textSuffix);
+            } else {
+                title = textSuffix == null ? "" : textSuffix;
+            }
+        } else {
+            title = textSuffix == null ? "" : textSuffix;;
+        }
+        return title;
+
+    }
 }

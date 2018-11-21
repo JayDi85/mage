@@ -1,32 +1,4 @@
 /*
-* Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without modification, are
-* permitted provided that the following conditions are met:
-*
-*    1. Redistributions of source code must retain the above copyright notice, this list of
-*       conditions and the following disclaimer.
-*
-*    2. Redistributions in binary form must reproduce the above copyright notice, this list
-*       of conditions and the following disclaimer in the documentation and/or other materials
-*       provided with the distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
-* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-* FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
-* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-* NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-* The views and conclusions contained in the software and documentation are those of the
-* authors and should not be interpreted as representing official policies, either expressed
-* or implied, of BetaSteward_at_googlemail.com.
- */
-
- /*
  * CardSelector.java
  *
  * Created on Feb 18, 2010, 2:49:03 PM
@@ -51,9 +23,16 @@ import mage.client.MageFrame;
 import mage.client.cards.*;
 import mage.client.constants.Constants.SortBy;
 import mage.client.deckeditor.table.TableModel;
+import mage.client.dialog.CheckBoxList;
+import static mage.client.dialog.PreferencesDialog.KEY_DECK_EDITOR_SEARCH_NAMES;
+import static mage.client.dialog.PreferencesDialog.KEY_DECK_EDITOR_SEARCH_RULES;
+import static mage.client.dialog.PreferencesDialog.KEY_DECK_EDITOR_SEARCH_TYPES;
+import static mage.client.dialog.PreferencesDialog.KEY_DECK_EDITOR_SEARCH_UNIQUE;
 import mage.client.util.GUISizeHelper;
+import mage.client.util.gui.FastSearchUtil;
 import mage.client.util.sets.ConstructedFormats;
 import mage.constants.CardType;
+import mage.constants.Rarity;
 import mage.filter.FilterCard;
 import mage.filter.predicate.Predicate;
 import mage.filter.predicate.Predicates;
@@ -78,6 +57,8 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
     private final SortSetting sortSetting;
     private static final Map<String, Integer> pdAllowed = new HashMap<>();
 
+    private final String TEST_MULTI_SET = "Multiple Sets selected";
+
     private final ActionListener searchAction = evt -> jButtonSearchActionPerformed(evt);
 
     /**
@@ -91,6 +72,21 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         initListViewComponents();
         setGUISize();
         currentView = mainModel; // by default we use List View
+
+        listCodeSelected = new CheckBoxList();
+        // remove the all option
+        boolean is_removeFinish = false;
+
+        String[] setCodes = ConstructedFormats.getTypes();
+        java.util.List<String> result = new ArrayList<>();
+
+        for (int i = 0; (i < setCodes.length) && (!is_removeFinish); i++) {
+            String item = setCodes[i];
+            if (!item.equals(ConstructedFormats.ALL)) {
+                result.add(item);
+            }
+        }
+        listCodeSelected.setListData(result.toArray());
     }
 
     private void makeTransparent() {
@@ -142,9 +138,11 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         mainTable.setOpaque(false);
         cbSortBy.setEnabled(false);
         chkPiles.setEnabled(false);
-//        chkNames.setEnabled(true);
-//        chkTypes.setEnabled(true);
-//        chkRules.setEnabled(true);
+
+        chkNames.setSelected("true".equals(MageFrame.getPreferences().get(KEY_DECK_EDITOR_SEARCH_NAMES, "true")));
+        chkTypes.setSelected("true".equals(MageFrame.getPreferences().get(KEY_DECK_EDITOR_SEARCH_TYPES, "true")));
+        chkRules.setSelected("true".equals(MageFrame.getPreferences().get(KEY_DECK_EDITOR_SEARCH_RULES, "true")));
+        chkUnique.setSelected("true".equals(MageFrame.getPreferences().get(KEY_DECK_EDITOR_SEARCH_UNIQUE, "false")));
 
         mainTable.addMouseListener(new MouseAdapter() {
             @Override
@@ -170,6 +168,10 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
     public void cleanUp() {
         this.cardGrid.clear();
         this.mainModel.clear();
+        MageFrame.getPreferences().put(KEY_DECK_EDITOR_SEARCH_NAMES, Boolean.toString(chkNames.isSelected()));
+        MageFrame.getPreferences().put(KEY_DECK_EDITOR_SEARCH_RULES, Boolean.toString(chkRules.isSelected()));
+        MageFrame.getPreferences().put(KEY_DECK_EDITOR_SEARCH_TYPES, Boolean.toString(chkTypes.isSelected()));
+        MageFrame.getPreferences().put(KEY_DECK_EDITOR_SEARCH_UNIQUE, Boolean.toString(chkUnique.isSelected()));
     }
 
     public void changeGUISize() {
@@ -206,6 +208,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         this.btnBooster.setVisible(false);
         this.btnClear.setVisible(false);
         this.cbExpansionSet.setVisible(false);
+        this.btnExpansionSearch.setVisible(false);
         this.limited = true;
         this.cards.clear();
         for (Card card : sideboard) {
@@ -219,6 +222,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         this.btnBooster.setVisible(true);
         this.btnClear.setVisible(true);
         this.cbExpansionSet.setVisible(true);
+        this.btnExpansionSearch.setVisible(true);
 //        cbExpansionSet.setModel(new DefaultComboBoxModel<>(ConstructedFormats.getTypes()));
         // Action event on Expansion set triggers loadCards method
         cbExpansionSet.setSelectedIndex(0);
@@ -228,7 +232,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         FilterCard filter = new FilterCard();
 
         String name = jTextFieldSearch.getText().trim();
-        filter.add(new CardTextPredicate(name, chkNames.isSelected(), chkTypes.isSelected(), chkRules.isSelected()));
+        filter.add(new CardTextPredicate(name, chkNames.isSelected(), chkTypes.isSelected(), chkRules.isSelected(), chkUnique.isSelected()));
 
         if (limited) {
             ArrayList<Predicate<MageObject>> predicates = new ArrayList<>();
@@ -325,10 +329,44 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         // criteria.types(CardType.TRIBAL);
         // criteria.types(CardType.CONSPIRACY);
 
+        if (this.tbCommon.isSelected()) {
+            criteria.rarities(Rarity.COMMON);
+            criteria.rarities(Rarity.LAND);
+        }
+        if (this.tbUncommon.isSelected()) {
+            criteria.rarities(Rarity.UNCOMMON);
+        }
+        if (this.tbRare.isSelected()) {
+            criteria.rarities(Rarity.RARE);
+        }
+        if (this.tbMythic.isSelected()) {
+            criteria.rarities(Rarity.MYTHIC);
+        }
+        if (this.tbSpecial.isSelected()) {
+            criteria.rarities(Rarity.SPECIAL);
+            criteria.rarities(Rarity.BONUS);
+        }
         if (this.cbExpansionSet.isVisible()) {
-            String expansionSelection = this.cbExpansionSet.getSelectedItem().toString();
-            if (!expansionSelection.equals("- All Sets")) {
-                java.util.List<String> setCodes = ConstructedFormats.getSetsByFormat(expansionSelection);
+            if (listCodeSelected.getCheckedIndices().length <= 1) {
+                String expansionSelection = this.cbExpansionSet.getSelectedItem().toString();
+                if (!expansionSelection.equals("- All Sets")) {
+                    java.util.List<String> setCodes = ConstructedFormats.getSetsByFormat(expansionSelection);
+                    criteria.setCodes(setCodes.toArray(new String[0]));
+                }
+            } else {
+                java.util.List<String> setCodes = new ArrayList<>();
+                //java.util.List<String> listReceived=new ArrayList<>() ;
+
+                int[] choiseValue = listCodeSelected.getCheckedIndices();
+                ListModel x = listCodeSelected.getModel();
+
+                for (int itemIndex : choiseValue) {
+
+                    java.util.List<String> listReceived = ConstructedFormats.getSetsByFormat(x.getElementAt(itemIndex).toString());
+                    listReceived.stream().filter((item) -> (setCodes.contains(item) == false)).forEachOrdered((item) -> {
+                        setCodes.add(item);
+                    });
+                }
                 criteria.setCodes(setCodes.toArray(new String[0]));
             }
         }
@@ -373,17 +411,30 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         filterCards();
     }
 
+    private void filterCardsRarity(int modifiers, String actionCommand) {
+        // ALT or CTRL button was pushed
+        if ((modifiers & ActionEvent.ALT_MASK) == ActionEvent.ALT_MASK || (modifiers & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK) {
+            boolean invert = (modifiers & ActionEvent.ALT_MASK) == ActionEvent.ALT_MASK;
+            tbCommon.setSelected(inverter(invert, tbCommon.getActionCommand(), actionCommand));
+            tbUncommon.setSelected(inverter(invert, tbUncommon.getActionCommand(), actionCommand));
+            tbRare.setSelected(inverter(invert, tbRare.getActionCommand(), actionCommand));
+            tbMythic.setSelected(inverter(invert, tbMythic.getActionCommand(), actionCommand));
+            tbSpecial.setSelected(inverter(invert, tbSpecial.getActionCommand(), actionCommand));
+        }
+        filterCards();
+    }
+
     private void filterCards() {
         FilterCard filter = buildFilter();
         try {
             java.util.List<Card> filteredCards = new ArrayList<>();
             setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            
+
             boolean chkPD = chkPennyDreadful.isSelected();
             if (chkPD) {
                 generatePennyDreadfulHash();
             }
-            
+
             if (limited) {
                 for (Card card : cards) {
                     if (filter.match(card, null)) {
@@ -471,6 +522,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         tbColorless = new javax.swing.JToggleButton();
         jSeparator1 = new javax.swing.JToolBar.Separator();
         cbExpansionSet = new javax.swing.JComboBox<>();
+        btnExpansionSearch = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JToolBar.Separator();
         chkPennyDreadful = new javax.swing.JCheckBox();
         btnBooster = new javax.swing.JButton();
@@ -490,6 +542,13 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         jSeparator4 = new javax.swing.JToolBar.Separator();
         jToggleListView = new javax.swing.JToggleButton();
         jToggleCardView = new javax.swing.JToggleButton();
+        jSeparator5 = new javax.swing.JToolBar.Separator();
+        tbRarities = new javax.swing.JToolBar();
+        tbCommon = new javax.swing.JToggleButton();
+        tbUncommon = new javax.swing.JToggleButton();
+        tbRare = new javax.swing.JToggleButton();
+        tbMythic = new javax.swing.JToggleButton();
+        tbSpecial = new javax.swing.JToggleButton();
         cardSelectorScrollPane = new javax.swing.JScrollPane();
         cardSelectorBottomPanel = new javax.swing.JPanel();
         jButtonAddToMain = new javax.swing.JButton();
@@ -500,6 +559,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         chkNames = new javax.swing.JCheckBox();
         chkTypes = new javax.swing.JCheckBox();
         chkRules = new javax.swing.JCheckBox();
+        chkUnique = new javax.swing.JCheckBox();
         jButtonSearch = new javax.swing.JButton();
         jButtonClean = new javax.swing.JButton();
         cardCountLabel = new javax.swing.JLabel();
@@ -615,10 +675,23 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
             }
         });
         tbColor.add(cbExpansionSet);
+
+        btnExpansionSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/buttons/search_32.png"))); // NOI18N
+        btnExpansionSearch.setToolTipText("Fast search set or expansion");
+        btnExpansionSearch.setAlignmentX(1.0F);
+        btnExpansionSearch.setFocusable(false);
+        btnExpansionSearch.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnExpansionSearch.setPreferredSize(new java.awt.Dimension(23, 23));
+        btnExpansionSearch.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnExpansionSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExpansionSearchActionPerformed(evt);
+            }
+        });
+        tbColor.add(btnExpansionSearch);
         tbColor.add(jSeparator2);
 
-
-        chkPennyDreadful.setText("Penny Dreadful");
+        chkPennyDreadful.setText("Penny Dreadful Only");
         chkPennyDreadful.setToolTipText("Will only allow Penny Dreadful legal cards to be shown.");
         chkPennyDreadful.setFocusable(false);
         chkPennyDreadful.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
@@ -628,15 +701,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
                 chkPilesActionPerformed(evt);
             }
         });
-        
-        JPopupMenu filterByFormatPopup = new JPopupMenu();
-        filterByFormatPopup.add(chkPennyDreadful);
-        filterByFormatPopup.setLayout(new GridBagLayout());
-
-        ButtonGroup selectByTypeModeGroup = new ButtonGroup();
-        JButton filterByFormatButton = new JButton ("Filter by Format");
-        makeButtonPopup(filterByFormatButton, filterByFormatPopup);
-        tbColor.add(filterByFormatButton);
+        tbColor.add(chkPennyDreadful);
 
         btnBooster.setText("Open Booster");
         btnBooster.setToolTipText("(CURRENTLY NOT WORKING) Generates a booster of the selected set and adds the cards to the card selector.");
@@ -832,6 +897,88 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
             }
         });
         tbTypes.add(jToggleCardView);
+        tbTypes.add(jSeparator5);
+
+        tbRarities.setFloatable(false);
+        tbRarities.setRollover(true);
+        tbRarities.setToolTipText("Hold the ALT-key while clicking to deselect all other card rarities or hold the CTRL-key to only select all other card rarities.");
+
+        tbCommon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/buttons/rarity_common_20.png"))); // NOI18N
+        tbCommon.setSelected(true);
+        tbCommon.setToolTipText("<html><strong>Common</strong><br/>" 
+            + tbRarities.getToolTipText());
+        tbCommon.setActionCommand("Common");
+        tbCommon.setFocusable(false);
+        tbCommon.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        tbCommon.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        tbCommon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbCommonActionPerformed(evt);
+            }
+        });
+        tbRarities.add(tbCommon);
+
+        tbUncommon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/buttons/rarity_uncommon_20.png"))); // NOI18N
+        tbUncommon.setSelected(true);
+        tbUncommon.setToolTipText("<html><strong>Uncommon</strong><br/>" 
+            + tbRarities.getToolTipText());
+        tbUncommon.setActionCommand("Uncommon");
+        tbUncommon.setFocusable(false);
+        tbUncommon.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        tbUncommon.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        tbUncommon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbUncommonActionPerformed(evt);
+            }
+        });
+        tbRarities.add(tbUncommon);
+
+        tbRare.setIcon(new javax.swing.ImageIcon(getClass().getResource("/buttons/rarity_rare_20.png"))); // NOI18N
+        tbRare.setSelected(true);
+        tbRare.setToolTipText("<html><strong>Rare</strong><br/>" 
+            + tbRarities.getToolTipText());
+        tbRare.setActionCommand("Rare");
+        tbRare.setFocusable(false);
+        tbRare.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        tbRare.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        tbRare.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbRareActionPerformed(evt);
+            }
+        });
+        tbRarities.add(tbRare);
+
+        tbMythic.setIcon(new javax.swing.ImageIcon(getClass().getResource("/buttons/rarity_mythic_20.png"))); // NOI18N
+        tbMythic.setSelected(true);
+        tbMythic.setToolTipText("<html><strong>Mythic</strong><br/>" 
+            + tbRarities.getToolTipText());
+        tbMythic.setActionCommand("Mythic");
+        tbMythic.setFocusable(false);
+        tbMythic.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        tbMythic.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        tbMythic.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbMythicActionPerformed(evt);
+            }
+        });
+        tbRarities.add(tbMythic);
+
+        tbSpecial.setIcon(new javax.swing.ImageIcon(getClass().getResource("/buttons/rarity_special_20.png"))); // NOI18N
+        tbSpecial.setSelected(true);
+        tbSpecial.setToolTipText("<html><strong>Special</strong><br/>" 
+            + tbRarities.getToolTipText());
+        tbSpecial.setActionCommand("Special");
+        tbSpecial.setFocusable(false);
+        tbSpecial.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        tbSpecial.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        tbSpecial.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbSpecialActionPerformed(evt);
+            }
+        });
+        tbRarities.add(tbSpecial);
+
+        tbTypes.add(tbRarities);
 
         cardSelectorScrollPane.setToolTipText("<HTML>Double click to add the card to the main deck.<br/>\nALT + Double click to add the card to the sideboard.");
 
@@ -933,6 +1080,21 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
             }
         });
 
+        chkUnique.setSelected(false);
+        chkUnique.setText("Unique");
+        chkUnique.setToolTipText("Show only the first found card of every card name.");
+        chkUnique.setFocusable(false);
+        chkUnique.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        chkUnique.setMaximumSize(new java.awt.Dimension(69, 16));
+        chkUnique.setMinimumSize(new java.awt.Dimension(69, 16));
+        chkUnique.setPreferredSize(new java.awt.Dimension(69, 16));
+        chkUnique.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        chkUnique.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkUniqueActionPerformed(evt);
+            }
+        });
+
         jButtonSearch.setText("Search");
         jButtonSearch.setToolTipText("Performs the search.");
         jButtonSearch.addActionListener(new java.awt.event.ActionListener() {
@@ -980,6 +1142,8 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkRules, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(5, 5, 5)
+                .addComponent(chkUnique, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(5, 5, 5)
                 .addComponent(cardCountLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cardCount, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -992,6 +1156,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
                 .addGroup(cardSelectorBottomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(chkTypes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(chkRules, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(chkUnique, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(chkNames, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(cardSelectorBottomPanelLayout.createSequentialGroup()
                         .addGroup(cardSelectorBottomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1035,6 +1200,19 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
     }// </editor-fold>//GEN-END:initComponents
 
     private void cbExpansionSetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbExpansionSetActionPerformed
+        if (!cbExpansionSet.getSelectedItem().toString().contains(TEST_MULTI_SET)) {
+            int index = cbExpansionSet.getSelectedIndex();
+            if (cbExpansionSet.getItemAt(0).contains(TEST_MULTI_SET)) {
+                cbExpansionSet.removeItemAt(0);
+                index--;
+            }
+            listCodeSelected.uncheckAll();
+            if (index > 0) {
+                //ofset because all sets is removed from the list
+                listCodeSelected.setChecked(index - 1, true);
+            }
+        }
+
         filterCards();
     }//GEN-LAST:event_cbExpansionSetActionPerformed
 
@@ -1207,9 +1385,74 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
         // TODO add your handling code here:
     }//GEN-LAST:event_chkTypesActionPerformed
 
-    private void chkRulesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRulesActionPerformed
+    private void chkRulesActionPerformed(java.awt.event.ActionEvent evt) {
+        // TODO add your handling code here:
+    }
+
+    private void chkUniqueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRulesActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_chkRulesActionPerformed
+
+    private void btnExpansionSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExpansionSearchActionPerformed
+        FastSearchUtil.showFastSearchForStringComboBox(listCodeSelected, FastSearchUtil.DEFAULT_EXPANSION_SEARCH_MESSAGE);
+//
+        int[] choiseValue = listCodeSelected.getCheckedIndices();
+        ListModel x = listCodeSelected.getModel();
+
+        if (choiseValue.length == 0)//none
+        {
+            cbExpansionSet.setSelectedIndex(0);
+        } else if (choiseValue.length == 1)//one
+        {
+            String itemSelected = listCodeSelected.getModel().getElementAt(choiseValue[0]).toString();
+            for (int index = 0; index < cbExpansionSet.getItemCount(); index++) {
+                if (cbExpansionSet.getItemAt(index).equals(itemSelected)) {
+                    cbExpansionSet.setSelectedIndex(index);
+                }
+            }
+
+        } else//many
+        {
+            String message = String.format("%s:%d", TEST_MULTI_SET, choiseValue.length);
+
+            cbExpansionSet.insertItemAt(message, 0);
+            cbExpansionSet.setSelectedIndex(0);
+
+            if (cbExpansionSet.getItemAt(1).contains(TEST_MULTI_SET)) {
+                cbExpansionSet.removeItemAt(1);
+            }
+
+            //listCodeSelected.setChecked(index-1, true);
+            //cbExpansionSet.
+        }
+
+        /*for(int itemIndex: choiseValue){
+                  //  LogLog.warn(String.format("%d:%s",itemIndex,x.getElementAt(itemIndex).toString()));
+        }
+         */
+//
+        filterCards();
+    }//GEN-LAST:event_btnExpansionSearchActionPerformed
+
+    private void tbCommonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbCommonActionPerformed
+        filterCardsRarity(evt.getModifiers(), evt.getActionCommand());
+    }//GEN-LAST:event_tbCommonActionPerformed
+
+    private void tbUncommonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbUncommonActionPerformed
+        filterCardsRarity(evt.getModifiers(), evt.getActionCommand());
+    }//GEN-LAST:event_tbUncommonActionPerformed
+
+    private void tbRareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbRareActionPerformed
+        filterCardsRarity(evt.getModifiers(), evt.getActionCommand());
+    }//GEN-LAST:event_tbRareActionPerformed
+
+    private void tbMythicActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbMythicActionPerformed
+        filterCardsRarity(evt.getModifiers(), evt.getActionCommand());
+    }//GEN-LAST:event_tbMythicActionPerformed
+
+    private void tbSpecialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbSpecialActionPerformed
+        filterCardsRarity(evt.getModifiers(), evt.getActionCommand());
+    }//GEN-LAST:event_tbSpecialActionPerformed
 
     private void toggleViewMode() {
         if (currentView instanceof CardGrid) {
@@ -1249,10 +1492,13 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
     private JTable mainTable;
     private ICardGrid currentView;
 
+    private final CheckBoxList listCodeSelected;
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgView;
     private javax.swing.JButton btnBooster;
     private javax.swing.JButton btnClear;
+    private javax.swing.JButton btnExpansionSearch;
     private javax.swing.JLabel cardCount;
     private javax.swing.JLabel cardCountLabel;
     private javax.swing.JPanel cardSelectorBottomPanel;
@@ -1264,6 +1510,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
     private javax.swing.JCheckBox chkPiles;
     private javax.swing.JCheckBox chkRules;
     private javax.swing.JCheckBox chkTypes;
+    private javax.swing.JCheckBox chkUnique;
     private javax.swing.JButton jButtonAddToMain;
     private javax.swing.JButton jButtonAddToSideboard;
     private javax.swing.JButton jButtonClean;
@@ -1274,6 +1521,7 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
     private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
+    private javax.swing.JToolBar.Separator jSeparator5;
     private javax.swing.JToolBar.Separator jSeparator6;
     private javax.swing.JTextField jTextFieldSearch;
     private javax.swing.JToggleButton jToggleCardView;
@@ -1283,15 +1531,21 @@ public class CardSelector extends javax.swing.JPanel implements ComponentListene
     private javax.swing.JToggleButton tbBlue;
     private javax.swing.JToolBar tbColor;
     private javax.swing.JToggleButton tbColorless;
+    private javax.swing.JToggleButton tbCommon;
     private javax.swing.JToggleButton tbCreatures;
     private javax.swing.JToggleButton tbEnchantments;
     private javax.swing.JToggleButton tbGreen;
     private javax.swing.JToggleButton tbInstants;
     private javax.swing.JToggleButton tbLand;
+    private javax.swing.JToggleButton tbMythic;
     private javax.swing.JToggleButton tbPlaneswalkers;
+    private javax.swing.JToggleButton tbRare;
+    private javax.swing.JToolBar tbRarities;
     private javax.swing.JToggleButton tbRed;
     private javax.swing.JToggleButton tbSorceries;
+    private javax.swing.JToggleButton tbSpecial;
     private javax.swing.JToolBar tbTypes;
+    private javax.swing.JToggleButton tbUncommon;
     private javax.swing.JToggleButton tbWhite;
     // End of variables declaration//GEN-END:variables
 

@@ -1,6 +1,8 @@
 package org.mage.plugins.card.images;
 
+import java.util.Locale;
 import java.util.Objects;
+import mage.util.CardUtil;
 
 /**
  *
@@ -82,7 +84,7 @@ public class CardDownloadData {
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+        if (!getClass().equals(obj.getClass())) {
             return false;
         }
         final CardDownloadData other = (CardDownloadData) obj;
@@ -126,6 +128,19 @@ public class CardDownloadData {
 
     public String getCollectorId() {
         return collectorId;
+    }
+
+    public Integer getCollectorIdAsInt() {
+        return CardUtil.parseCardNumberAsInt(collectorId);
+    }
+
+    public String getCollectorIdPostfix() {
+        return getCollectorId().replaceAll(getCollectorIdAsInt().toString(), "");
+    }
+
+    public boolean isCollectorIdWithStr() {
+        // card have special numbers like "103a", "180b" (scryfall style)
+        return !getCollectorId().equals(getCollectorIdAsInt().toString());
     }
 
     public String getName() {
@@ -179,7 +194,7 @@ public class CardDownloadData {
     private String lastDitchTokenDescriptor() {
         String tmpName = this.name.replaceAll("[^a-zA-Z0-9]", "");
         String descriptor = tmpName + "....";
-        descriptor = descriptor.toUpperCase();
+        descriptor = descriptor.toUpperCase(Locale.ENGLISH);
         return descriptor;
     }
 

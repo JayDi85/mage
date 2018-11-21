@@ -3,14 +3,15 @@ package org.mage.plugins.card.dl.sources;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
 import mage.client.dialog.PreferencesDialog;
 import org.mage.plugins.card.images.CardDownloadData;
 import org.mage.plugins.card.utils.CardImageUtils;
 
 /**
- *
  * @author North
  */
 public enum MagicCardsImageSource implements CardImageSource {
@@ -201,13 +202,15 @@ public enum MagicCardsImageSource implements CardImageSource {
             add("C17");
             add("XLN");
             add("DDT");
+            add("DDU");
             add("IMA");
             add("E02");
             add("V17");
             add("UST");
-//        add("RIX");
-//        add("A25");
-//        add("DOM");
+            add("RIX");
+            add("A25");
+            add("DOM");
+//        add("CM2");
 //        add("M19");
         }
     };
@@ -262,6 +265,8 @@ public enum MagicCardsImageSource implements CardImageSource {
             put("DDQ", "duel-decks-blessed-vs-cursed");
             put("DDR", "duel-decks-nissa-vs-ob-nixilis");
             put("DDS", "duel-decks-mind-vs-might");
+            put("DDT", "duel-decks-merfolk-vs-goblin");
+            put("DDU", "duel-decks-elves-vs-inventors");
             put("DGM", "dragons-maze");
             put("DKA", "dark-ascension");
             put("DRB", "from-the-vault-dragons");
@@ -337,6 +342,7 @@ public enum MagicCardsImageSource implements CardImageSource {
             put("WWK", "worldwake");
             put("ZEN", "zendikar");
         }
+
         private static final long serialVersionUID = 1L;
     };
 
@@ -356,7 +362,7 @@ public enum MagicCardsImageSource implements CardImageSource {
     }
 
     @Override
-    public String generateURL(CardDownloadData card) throws Exception {
+    public CardImageUrls generateURL(CardDownloadData card) throws Exception {
         String collectorId = card.getCollectorId();
         String cardSet = card.getSet();
         if (collectorId == null || cardSet == null) {
@@ -367,7 +373,7 @@ public enum MagicCardsImageSource implements CardImageSource {
         String preferedLanguage = PreferencesDialog.getCachedValue(PreferencesDialog.KEY_CARD_IMAGES_PREF_LANGUAGE, "en");
 
         StringBuilder url = new StringBuilder("http://magiccards.info/scans/").append(preferedLanguage).append('/');
-        url.append(set.toLowerCase()).append('/').append(collectorId);
+        url.append(set.toLowerCase(Locale.ENGLISH)).append('/').append(collectorId);
 
         if (card.isTwoFacedCard()) {
             url.append(card.isSecondSide() ? "b" : "a");
@@ -384,24 +390,24 @@ public enum MagicCardsImageSource implements CardImageSource {
         }
         url.append(".jpg");
 
-        return url.toString();
+        return new CardImageUrls(url.toString());
     }
 
     @Override
-    public String generateTokenUrl(CardDownloadData card) {
+    public CardImageUrls generateTokenUrl(CardDownloadData card) {
         String name = card.getName();
         // add type to name if it's not 0
         if (card.getType() > 0) {
             name = name + ' ' + card.getType();
         }
-        name = name.replaceAll(" ", "-").replace(",", "").toLowerCase();
+        name = name.replaceAll(" ", "-").replace(",", "").toLowerCase(Locale.ENGLISH);
         String set = "not-supported-set";
         if (setNameTokenReplacement.containsKey(card.getSet())) {
             set = setNameTokenReplacement.get(card.getSet());
         } else {
             set += '-' + card.getSet();
         }
-        return "http://magiccards.info/extras/token/" + set + '/' + name + ".jpg";
+        return new CardImageUrls("http://magiccards.info/extras/token/" + set + '/' + name + ".jpg");
     }
 
     @Override

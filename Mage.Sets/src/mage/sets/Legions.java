@@ -1,30 +1,4 @@
-/*
- *  Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without modification, are
- *  permitted provided that the following conditions are met:
- *
- *     1. Redistributions of source code must retain the above copyright notice, this list of
- *        conditions and the following disclaimer.
- *
- *     2. Redistributions in binary form must reproduce the above copyright notice, this list
- *        of conditions and the following disclaimer in the documentation and/or other materials
- *        provided with the distribution.
- *
- *  THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- *  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  The views and conclusions contained in the software and documentation are those of the
- *  authors and should not be interpreted as representing official policies, either expressed
- *  or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.sets;
 
 import mage.cards.ExpansionSet;
@@ -35,7 +9,7 @@ import mage.constants.SetType;
  *
  * @author North
  */
-public class Legions extends ExpansionSet {
+public final class Legions extends ExpansionSet {
 
     private static final Legions instance = new Legions();
 
@@ -61,6 +35,7 @@ public class Legions extends ExpansionSet {
         cards.add(new SetCardInfo("Aven Redeemer", 3, Rarity.COMMON, mage.cards.a.AvenRedeemer.class));
         cards.add(new SetCardInfo("Aven Warhawk", 4, Rarity.UNCOMMON, mage.cards.a.AvenWarhawk.class));
         cards.add(new SetCardInfo("Bane of the Living", 60, Rarity.RARE, mage.cards.b.BaneOfTheLiving.class));
+        cards.add(new SetCardInfo("Beacon of Destiny", 5, Rarity.RARE, mage.cards.b.BeaconOfDestiny.class));
         cards.add(new SetCardInfo("Berserk Murlodont", 117, Rarity.COMMON, mage.cards.b.BerserkMurlodont.class));
         cards.add(new SetCardInfo("Blade Sliver", 88, Rarity.UNCOMMON, mage.cards.b.BladeSliver.class));
         cards.add(new SetCardInfo("Blood Celebrant", 61, Rarity.COMMON, mage.cards.b.BloodCelebrant.class));
@@ -141,6 +116,7 @@ public class Legions extends ExpansionSet {
         cards.add(new SetCardInfo("Mistform Seaswift", 45, Rarity.COMMON, mage.cards.m.MistformSeaswift.class));
         cards.add(new SetCardInfo("Mistform Sliver", 46, Rarity.COMMON, mage.cards.m.MistformSliver.class));
         cards.add(new SetCardInfo("Mistform Ultimus", 47, Rarity.RARE, mage.cards.m.MistformUltimus.class));
+        cards.add(new SetCardInfo("Mistform Wakecaster", 48, Rarity.UNCOMMON, mage.cards.m.MistformWakecaster.class));
         cards.add(new SetCardInfo("Nantuko Vigilante", 132, Rarity.COMMON, mage.cards.n.NantukoVigilante.class));
         cards.add(new SetCardInfo("Needleshot Gourna", 133, Rarity.COMMON, mage.cards.n.NeedleshotGourna.class));
         cards.add(new SetCardInfo("Noxious Ghoul", 77, Rarity.UNCOMMON, mage.cards.n.NoxiousGhoul.class));
@@ -188,6 +164,7 @@ public class Legions extends ExpansionSet {
         cards.add(new SetCardInfo("Ward Sliver", 25, Rarity.UNCOMMON, mage.cards.w.WardSliver.class));
         cards.add(new SetCardInfo("Warped Researcher", 56, Rarity.UNCOMMON, mage.cards.w.WarpedResearcher.class));
         cards.add(new SetCardInfo("Weaver of Lies", 57, Rarity.RARE, mage.cards.w.WeaverOfLies.class));
+        cards.add(new SetCardInfo("Whipgrass Entangler", 26, Rarity.COMMON, mage.cards.w.WhipgrassEntangler.class));
         cards.add(new SetCardInfo("White Knight", 27, Rarity.UNCOMMON, mage.cards.w.WhiteKnight.class));
         cards.add(new SetCardInfo("Willbender", 58, Rarity.UNCOMMON, mage.cards.w.Willbender.class));
         cards.add(new SetCardInfo("Windborn Muse", 28, Rarity.RARE, mage.cards.w.WindbornMuse.class));

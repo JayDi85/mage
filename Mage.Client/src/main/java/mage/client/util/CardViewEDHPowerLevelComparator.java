@@ -1,33 +1,8 @@
-/*
- *  Copyright 2011 BetaSteward_at_googlemail.com. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without modification, are
- *  permitted provided that the following conditions are met:
- *
- *     1. Redistributions of source code must retain the above copyright notice, this list of
- *        conditions and the following disclaimer.
- *
- *     2. Redistributions in binary form must reproduce the above copyright notice, this list
- *        of conditions and the following disclaimer in the documentation and/or other materials
- *        provided with the distribution.
- *
- *  THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- *  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  The views and conclusions contained in the software and documentation are those of the
- *  authors and should not be interpreted as representing official policies, either expressed
- *  or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.client.util;
 
 import java.util.Comparator;
+import java.util.Locale;
 import mage.view.CardView;
 
 /**
@@ -36,7 +11,7 @@ import mage.view.CardView;
  */
 public class CardViewEDHPowerLevelComparator implements Comparator<CardView> {
 
-    public int getPowerLevel(CardView card) {
+    private int getPowerLevel(CardView card) {
 
         int thisMaxPower = 0;
 
@@ -99,7 +74,7 @@ public class CardViewEDHPowerLevelComparator implements Comparator<CardView> {
         boolean whenYouCast = false;
 
         for (String str : card.getRules()) {
-            String s = str.toLowerCase();
+            String s = str.toLowerCase(Locale.ENGLISH);
             annihilator |= s.contains("annihilator");
             anyNumberOfTarget |= s.contains("any number");
             buyback |= s.contains("buyback");
@@ -331,17 +306,17 @@ public class CardViewEDHPowerLevelComparator implements Comparator<CardView> {
             thisMaxPower = Math.max(thisMaxPower, 1);
         }
 
-        if (card.getCardTypes().contains("Plainswalker")) {
-            if (card.getName().toLowerCase().equals("jace, the mind sculptor")) {
+        if (card.isPlanesWalker()) {
+            if (card.getName().toLowerCase(Locale.ENGLISH).equals("jace, the mind sculptor")) {
                 thisMaxPower = Math.max(thisMaxPower, 6);
             }
-            if (card.getName().toLowerCase().equals("ugin, the spirit dragon")) {
+            if (card.getName().toLowerCase(Locale.ENGLISH).equals("ugin, the spirit dragon")) {
                 thisMaxPower = Math.max(thisMaxPower, 5);
             }
             thisMaxPower = Math.max(thisMaxPower, 4);
         }
 
-        String cn = card.getName().toLowerCase();
+        String cn = card.getName().toLowerCase(Locale.ENGLISH);
         if (cn.equals("ancient tomb")
                 || cn.equals("anafenza, the foremost")
                 || cn.equals("arcum dagsson")
@@ -534,7 +509,7 @@ public class CardViewEDHPowerLevelComparator implements Comparator<CardView> {
 
     @Override
     public int compare(CardView o1, CardView o2) {
-        return Integer.valueOf(getPowerLevel(o1)).compareTo(getPowerLevel(o2));
+        return Integer.compare(getPowerLevel(o1), getPowerLevel(o2));
     }
 
 }

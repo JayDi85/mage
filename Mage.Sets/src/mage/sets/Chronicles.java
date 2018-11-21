@@ -1,30 +1,3 @@
-/*
- *  Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without modification, are
- *  permitted provided that the following conditions are met:
- *
- *     1. Redistributions of source code must retain the above copyright notice, this list of
- *        conditions and the following disclaimer.
- *
- *     2. Redistributions in binary form must reproduce the above copyright notice, this list
- *        of conditions and the following disclaimer in the documentation and/or other materials
- *        provided with the distribution.
- *
- *  THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- *  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  The views and conclusions contained in the software and documentation are those of the
- *  authors and should not be interpreted as representing official policies, either expressed
- *  or implied, of BetaSteward_at_googlemail.com.
- */
 package mage.sets;
 
 import mage.cards.ExpansionSet;
@@ -35,7 +8,7 @@ import mage.constants.SetType;
  *
  * @author LevelX2
  */
-public class Chronicles extends ExpansionSet {
+public final class Chronicles extends ExpansionSet {
 
     private static final Chronicles instance = new Chronicles();
 
@@ -56,7 +29,7 @@ public class Chronicles extends ExpansionSet {
         cards.add(new SetCardInfo("Abu Ja'far", 57, Rarity.UNCOMMON, mage.cards.a.AbuJafar.class));
         cards.add(new SetCardInfo("Active Volcano", 43, Rarity.COMMON, mage.cards.a.ActiveVolcano.class));
         cards.add(new SetCardInfo("Akron Legionnaire", 58, Rarity.RARE, mage.cards.a.AkronLegionnaire.class));
-        cards.add(new SetCardInfo("Aladdin", 44, Rarity.RARE, mage.cards.a.Aladdin.class));
+        cards.add(new SetCardInfo("Aladdin", 44, Rarity.UNCOMMON, mage.cards.a.Aladdin.class));
         cards.add(new SetCardInfo("Angelic Voices", 59, Rarity.RARE, mage.cards.a.AngelicVoices.class));
         cards.add(new SetCardInfo("Arcades Sabboth", 106, Rarity.RARE, mage.cards.a.ArcadesSabboth.class));
         cards.add(new SetCardInfo("Arena of the Ancients", 71, Rarity.RARE, mage.cards.a.ArenaOfTheAncients.class));
@@ -64,6 +37,7 @@ public class Chronicles extends ExpansionSet {
         cards.add(new SetCardInfo("Ashnod's Altar", 72, Rarity.COMMON, mage.cards.a.AshnodsAltar.class));
         cards.add(new SetCardInfo("Ashnod's Transmogrant", 73, Rarity.COMMON, mage.cards.a.AshnodsTransmogrant.class));
         cards.add(new SetCardInfo("Axelrod Gunnarson", 107, Rarity.RARE, mage.cards.a.AxelrodGunnarson.class));
+        cards.add(new SetCardInfo("Ayesha Tanaka", 108, Rarity.RARE, mage.cards.a.AyeshaTanaka.class));
         cards.add(new SetCardInfo("Azure Drake", 15, Rarity.UNCOMMON, mage.cards.a.AzureDrake.class));
         cards.add(new SetCardInfo("Banshee", 1, Rarity.UNCOMMON, mage.cards.b.Banshee.class));
         cards.add(new SetCardInfo("Barl's Cage", 74, Rarity.RARE, mage.cards.b.BarlsCage.class));
@@ -86,12 +60,16 @@ public class Chronicles extends ExpansionSet {
         cards.add(new SetCardInfo("D'Avenant Archer", 61, Rarity.COMMON, mage.cards.d.DAvenantArcher.class));
         cards.add(new SetCardInfo("Divine Offering", 62, Rarity.COMMON, mage.cards.d.DivineOffering.class));
         cards.add(new SetCardInfo("Emerald Dragonfly", 35, Rarity.COMMON, mage.cards.e.EmeraldDragonfly.class));
+        cards.add(new SetCardInfo("Enchantment Alteration", 19, Rarity.UNCOMMON, mage.cards.e.EnchantmentAlteration.class));
         cards.add(new SetCardInfo("Erhnam Djinn", 36, Rarity.UNCOMMON, mage.cards.e.ErhnamDjinn.class));
         cards.add(new SetCardInfo("Fallen Angel", 4, Rarity.UNCOMMON, mage.cards.f.FallenAngel.class));
         cards.add(new SetCardInfo("Feldon's Cane", 77, Rarity.COMMON, mage.cards.f.FeldonsCane.class));
         cards.add(new SetCardInfo("Fire Drake", 47, Rarity.UNCOMMON, mage.cards.f.FireDrake.class));
+        cards.add(new SetCardInfo("Fishliver Oil", 20, Rarity.COMMON, mage.cards.f.FishliverOil.class));
         cards.add(new SetCardInfo("Flash Flood", 21, Rarity.COMMON, mage.cards.f.FlashFlood.class));
         cards.add(new SetCardInfo("Fountain of Youth", 78, Rarity.COMMON, mage.cards.f.FountainOfYouth.class));
+        cards.add(new SetCardInfo("Gabriel Angelfire", 111, Rarity.RARE, mage.cards.g.GabrielAngelfire.class));
+        cards.add(new SetCardInfo("Gauntlets of Chaos", 79, Rarity.RARE, mage.cards.g.GauntletsOfChaos.class));
         cards.add(new SetCardInfo("Ghazban Ogre", 37, Rarity.COMMON, mage.cards.g.GhazbanOgre.class));
         cards.add(new SetCardInfo("Goblin Artisans", 48, Rarity.UNCOMMON, mage.cards.g.GoblinArtisans.class));
         cards.add(new SetCardInfo("Goblin Digging Team", 49, Rarity.COMMON, mage.cards.g.GoblinDiggingTeam.class));
@@ -112,6 +90,7 @@ public class Chronicles extends ExpansionSet {
         cards.add(new SetCardInfo("Marhault Elsdragon", 114, Rarity.UNCOMMON, mage.cards.m.MarhaultElsdragon.class));
         cards.add(new SetCardInfo("Metamorphosis", 38, Rarity.COMMON, mage.cards.m.Metamorphosis.class));
         cards.add(new SetCardInfo("Mountain Yeti", 53, Rarity.COMMON, mage.cards.m.MountainYeti.class));
+        cards.add(new SetCardInfo("Nebuchadnezzar", 115, Rarity.RARE, mage.cards.n.Nebuchadnezzar.class));
         cards.add(new SetCardInfo("Nicol Bolas", 116, Rarity.RARE, mage.cards.n.NicolBolas.class));
         cards.add(new SetCardInfo("Obelisk of Undoing", 84, Rarity.RARE, mage.cards.o.ObeliskOfUndoing.class));
         cards.add(new SetCardInfo("Palladia-Mors", 117, Rarity.RARE, mage.cards.p.PalladiaMors.class));
@@ -122,17 +101,21 @@ public class Chronicles extends ExpansionSet {
         cards.add(new SetCardInfo("Recall", 24, Rarity.UNCOMMON, mage.cards.r.Recall.class));
         cards.add(new SetCardInfo("Remove Soul", 25, Rarity.COMMON, mage.cards.r.RemoveSoul.class));
         cards.add(new SetCardInfo("Repentant Blacksmith", 67, Rarity.COMMON, mage.cards.r.RepentantBlacksmith.class));
-        cards.add(new SetCardInfo("Revelation", 87, Rarity.RARE, mage.cards.r.Revelation.class));
+        cards.add(new SetCardInfo("Revelation", 40, Rarity.RARE, mage.cards.r.Revelation.class));
         cards.add(new SetCardInfo("Rubinia Soulsinger", 118, Rarity.RARE, mage.cards.r.RubiniaSoulsinger.class));
+        cards.add(new SetCardInfo("Runesword", 86, Rarity.COMMON, mage.cards.r.Runesword.class));
         cards.add(new SetCardInfo("Safe Haven", 93, Rarity.RARE, mage.cards.s.SafeHaven.class));
         cards.add(new SetCardInfo("Scavenger Folk", 41, Rarity.COMMON, mage.cards.s.ScavengerFolk.class));
-        cards.add(new SetCardInfo("Sentinel", 281, Rarity.RARE, mage.cards.s.Sentinel.class));
+        cards.add(new SetCardInfo("Sentinel", 87, Rarity.RARE, mage.cards.s.Sentinel.class));
         cards.add(new SetCardInfo("Serpent Generator", 88, Rarity.RARE, mage.cards.s.SerpentGenerator.class));
         cards.add(new SetCardInfo("Shield Wall", 68, Rarity.UNCOMMON, mage.cards.s.ShieldWall.class));
+        cards.add(new SetCardInfo("Shimian Night Stalker", 8, Rarity.UNCOMMON, mage.cards.s.ShimianNightStalker.class));
         cards.add(new SetCardInfo("Sivitri Scarzam", 119, Rarity.UNCOMMON, mage.cards.s.SivitriScarzam.class));
         cards.add(new SetCardInfo("Sol'kanar the Swamp King", 120, Rarity.RARE, mage.cards.s.SolkanarTheSwampKing.class));
+        cards.add(new SetCardInfo("Stangg", 121, Rarity.RARE, mage.cards.s.Stangg.class));
         cards.add(new SetCardInfo("Storm Seeker", 42, Rarity.UNCOMMON, mage.cards.s.StormSeeker.class));
         cards.add(new SetCardInfo("Teleport", 26, Rarity.RARE, mage.cards.t.Teleport.class));
+        cards.add(new SetCardInfo("The Fallen", 10, Rarity.UNCOMMON, mage.cards.t.TheFallen.class));
         cards.add(new SetCardInfo("The Wretched", 11, Rarity.RARE, mage.cards.t.TheWretched.class));
         cards.add(new SetCardInfo("Tobias Andrion", 122, Rarity.UNCOMMON, mage.cards.t.TobiasAndrion.class));
         cards.add(new SetCardInfo("Tormod's Crypt", 89, Rarity.COMMON, mage.cards.t.TormodsCrypt.class));
@@ -154,7 +137,9 @@ public class Chronicles extends ExpansionSet {
         cards.add(new SetCardInfo("Vaevictis Asmadi", 124, Rarity.RARE, mage.cards.v.VaevictisAsmadi.class));
         cards.add(new SetCardInfo("Wall of Heat", 55, Rarity.COMMON, mage.cards.w.WallOfHeat.class));
         cards.add(new SetCardInfo("Wall of Opposition", 56, Rarity.UNCOMMON, mage.cards.w.WallOfOpposition.class));
+        cards.add(new SetCardInfo("Wall of Vapor", 27, Rarity.COMMON, mage.cards.w.WallOfVapor.class));
         cards.add(new SetCardInfo("Wall of Wonder", 28, Rarity.UNCOMMON, mage.cards.w.WallOfWonder.class));
+        cards.add(new SetCardInfo("War Elephant", 69, Rarity.COMMON, mage.cards.w.WarElephant.class));
         cards.add(new SetCardInfo("Witch Hunter", 70, Rarity.UNCOMMON, mage.cards.w.WitchHunter.class));
         cards.add(new SetCardInfo("Xira Arien", 125, Rarity.RARE, mage.cards.x.XiraArien.class));
         cards.add(new SetCardInfo("Yawgmoth Demon", 14, Rarity.RARE, mage.cards.y.YawgmothDemon.class));

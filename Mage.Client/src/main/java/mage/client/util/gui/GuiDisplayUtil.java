@@ -2,9 +2,13 @@ package mage.client.util.gui;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Locale;
 import javax.swing.*;
+import mage.client.dialog.PreferencesDialog;
+import static mage.client.dialog.PreferencesDialog.KEY_MAGE_PANEL_LAST_SIZE;
 import mage.client.MageFrame;
 import mage.client.util.GUISizeHelper;
+import mage.client.table.*;
 import mage.constants.*;
 import mage.view.CardView;
 import mage.view.CounterView;
@@ -23,6 +27,35 @@ public final class GuiDisplayUtil {
 
         public int basicTextLength;
         public ArrayList<String> lines;
+    }
+
+    public static void restoreDividerLocations(Rectangle bounds, String lastDividerLocation, JComponent component) {
+      String currentBounds = Double.toString(bounds.getWidth()) + 'x' + Double.toString(bounds.getHeight());
+      String savedBounds = PreferencesDialog.getCachedValue(KEY_MAGE_PANEL_LAST_SIZE, null);
+      // use divider positions only if screen size is the same as it was the time the settings were saved
+      if (savedBounds != null && savedBounds.equals(currentBounds)) {
+        if (lastDividerLocation != null && component != null) {
+          if (component instanceof JSplitPane) {
+            JSplitPane jSplitPane = (JSplitPane) component;
+            jSplitPane.setDividerLocation(Integer.parseInt(lastDividerLocation));
+          }
+
+          if (component instanceof PlayersChatPanel) {
+            PlayersChatPanel playerChatPanel = (PlayersChatPanel) component;
+            playerChatPanel.setSplitDividerLocation(Integer.parseInt(lastDividerLocation));
+          }
+        }
+      }
+    }
+
+    public static void saveCurrentBoundsToPrefs() {
+      Rectangle rec = MageFrame.getDesktop().getBounds();
+      String currentBounds = Double.toString(rec.getWidth()) + 'x' + Double.toString(rec.getHeight());
+      PreferencesDialog.saveValue(KEY_MAGE_PANEL_LAST_SIZE, currentBounds);
+    }
+
+    public static void saveDividerLocationToPrefs(String dividerPrefKey, int position) {
+      PreferencesDialog.saveValue(dividerPrefKey, Integer.toString(position));
     }
 
     public static JXPanel getDescription(CardView card, int width, int height) {
@@ -65,7 +98,7 @@ public final class GuiDisplayUtil {
                 out.append(c);
             }
         }
-        return out.toString().toLowerCase();
+        return out.toString().toLowerCase(Locale.ENGLISH);
     }
 
     public static void keepComponentInsideScreen(int centerX, int centerY, Component component) {
@@ -133,12 +166,6 @@ public final class GuiDisplayUtil {
         textLines.lines = new ArrayList<>(card.getRules());
         for (String rule : card.getRules()) {
             textLines.basicTextLength += rule.length();
-        }
-        if (card.getMageObjectType() == MageObjectType.PERMANENT) {
-            if (card.getPairedCard() != null) {
-                textLines.lines.add("<span color='green'><i>Paired with another creature</i></span>");
-                textLines.basicTextLength += 30;
-            }
         }
         if (card.getMageObjectType().canHaveCounters()) {
             ArrayList<CounterView> counters = new ArrayList<>();
@@ -262,7 +289,7 @@ public final class GuiDisplayUtil {
             rarity = card.getRarity().getCode();
         }
         if (card.getExpansionSetCode() != null) {
-            buffer.append(ManaSymbols.replaceSetCodeWithHTML(card.getExpansionSetCode().toUpperCase(), rarity, GUISizeHelper.symbolTooltipSize));
+            buffer.append(ManaSymbols.replaceSetCodeWithHTML(card.getExpansionSetCode().toUpperCase(Locale.ENGLISH), rarity, GUISizeHelper.symbolTooltipSize));
         }
         buffer.append("</td></tr></table>");
 

@@ -8,8 +8,12 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class RandomUtil {
 
+    private RandomUtil() {
+    }
 
-    public static Random getRandom() {return ThreadLocalRandom.current();}
+    public static Random getRandom() {
+        return ThreadLocalRandom.current();
+    }
 
     public static int nextInt() {
         return ThreadLocalRandom.current().nextInt();
@@ -21,5 +25,9 @@ public final class RandomUtil {
 
     public static boolean nextBoolean() {
         return ThreadLocalRandom.current().nextBoolean();
+    }
+
+    public static double nextDouble() {
+        return ThreadLocalRandom.current().nextDouble();
     }
 }

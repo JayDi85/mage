@@ -1,32 +1,9 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.view;
 
+import com.google.gson.annotations.Expose;
+import java.util.*;
+import java.util.stream.Collectors;
 import mage.MageObject;
 import mage.ObjectColor;
 import mage.abilities.Abilities;
@@ -42,6 +19,7 @@ import mage.counters.CounterType;
 import mage.designations.Designation;
 import mage.game.Game;
 import mage.game.command.Emblem;
+import mage.game.command.Plane;
 import mage.game.permanent.Permanent;
 import mage.game.permanent.PermanentToken;
 import mage.game.permanent.token.Token;
@@ -51,9 +29,6 @@ import mage.target.Target;
 import mage.target.Targets;
 import mage.util.SubTypeList;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 /**
  * @author BetaSteward_at_googlemail.com
  */
@@ -62,11 +37,17 @@ public class CardView extends SimpleCardView {
     private static final long serialVersionUID = 1L;
 
     protected UUID parentId;
+    @Expose
     protected String name;
+    @Expose
     protected String displayName;
+    @Expose
     protected List<String> rules;
+    @Expose
     protected String power;
+    @Expose
     protected String toughness;
+    @Expose
     protected String loyalty = "";
     protected String startingLoyalty;
     protected EnumSet<CardType> cardTypes;
@@ -111,8 +92,8 @@ public class CardView extends SimpleCardView {
     protected ArtRect artRect = ArtRect.NORMAL;
 
     protected List<UUID> targets;
-
     protected UUID pairedCard;
+    protected List<UUID> bandedCards;
     protected boolean paid;
     protected List<CounterView> counters;
 
@@ -202,6 +183,7 @@ public class CardView extends SimpleCardView {
         this.targets = null;
 
         this.pairedCard = cardView.pairedCard;
+        this.bandedCards = null;
         this.paid = cardView.paid;
         this.counters = null;
 
@@ -352,11 +334,15 @@ public class CardView extends SimpleCardView {
             if (game != null) {
                 if (permanent.getCounters(game) != null && !permanent.getCounters(game).isEmpty()) {
                     this.loyalty = Integer.toString(permanent.getCounters(game).getCount(CounterType.LOYALTY));
-                    this.pairedCard = permanent.getPairedCard() != null ? permanent.getPairedCard().getSourceId() : null;
                     counters = new ArrayList<>();
                     for (Counter counter : permanent.getCounters(game).values()) {
                         counters.add(new CounterView(counter));
                     }
+                }
+                this.pairedCard = permanent.getPairedCard() != null ? permanent.getPairedCard().getSourceId() : null;
+                this.bandedCards = new ArrayList<>();
+                for (UUID bandedCard : permanent.getBandedCards()) {
+                    bandedCards.add(bandedCard);
                 }
                 if (!permanent.getControllerId().equals(permanent.getOwnerId())) {
                     controlledByOwner = false;
@@ -508,10 +494,25 @@ public class CardView extends SimpleCardView {
             Emblem emblem = (Emblem) object;
             this.rarity = Rarity.SPECIAL;
             this.rules = emblem.getAbilities().getRules(emblem.getName());
+        } else if (object instanceof Plane) {
+            this.mageObjectType = MageObjectType.PLANE;
+            Plane plane = (Plane) object;
+            this.rarity = Rarity.SPECIAL;
+            this.frameStyle = FrameStyle.M15_NORMAL;
+            // Display in landscape/rotated/on its side
+            this.rotate = true;
+            this.rules = plane.getAbilities().getRules(plane.getName());
+        } else if (object instanceof Designation) {
+            this.mageObjectType = MageObjectType.DESIGNATION;
+            Designation designation = (Designation) object;
+            this.rarity = Rarity.SPECIAL;
+            this.frameStyle = FrameStyle.M15_NORMAL;
+            // Display in landscape/rotated/on its side
+            this.rules = designation.getAbilities().getRules(designation.getName());
         }
         if (this.rarity == null && object instanceof StackAbility) {
             StackAbility stackAbility = (StackAbility) object;
-            this.rarity = Rarity.NA;
+            this.rarity = Rarity.SPECIAL;
             this.rules = new ArrayList<>();
             this.rules.add(stackAbility.getRule());
             if (stackAbility.getZone() == Zone.COMMAND) {
@@ -541,6 +542,21 @@ public class CardView extends SimpleCardView {
         // emblem images are always with common (black) symbol
         this.frameStyle = FrameStyle.M15_NORMAL;
         this.expansionSetCode = emblem.getExpansionSetCode();
+        this.rarity = Rarity.COMMON;
+    }
+
+    public CardView(PlaneView plane) {
+        this(true);
+        this.gameObject = true;
+        this.id = plane.getId();
+        this.mageObjectType = MageObjectType.PLANE;
+        this.name = plane.getName();
+        this.displayName = name;
+        this.rules = plane.getRules();
+        // Display the plane in landscape (similar to Fused cards)
+        this.rotate = true;
+        this.frameStyle = FrameStyle.M15_NORMAL;
+        this.expansionSetCode = plane.getExpansionSetCode();
         this.rarity = Rarity.COMMON;
     }
 
@@ -628,7 +644,7 @@ public class CardView extends SimpleCardView {
         this.frameColor = token.getFrameColor(null);
         this.frameStyle = token.getFrameStyle();
         this.manaCost = token.getManaCost().getSymbols();
-        this.rarity = Rarity.NA;
+        this.rarity = Rarity.SPECIAL;
         this.type = token.getTokenType();
         this.tokenDescriptor = token.getTokenDescriptor();
         this.tokenSetCode = token.getOriginalExpansionSetCode();
@@ -733,6 +749,9 @@ public class CardView extends SimpleCardView {
 
     @Override
     public String getExpansionSetCode() {
+        if (expansionSetCode == null) {
+            expansionSetCode = "";
+        }
         return expansionSetCode;
     }
 
@@ -885,6 +904,10 @@ public class CardView extends SimpleCardView {
         return pairedCard;
     }
 
+    public List<UUID> getBandedCards() {
+        return bandedCards;
+    }
+
     public int getType() {
         return type;
     }
@@ -972,7 +995,7 @@ public class CardView extends SimpleCardView {
     public String getColorText() {
 
         String color = getColor().getDescription();
-        return color.substring(0, 1).toUpperCase() + color.substring(1);
+        return color.substring(0, 1).toUpperCase(Locale.ENGLISH) + color.substring(1);
     }
 
     public String getTypeText() {

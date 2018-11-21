@@ -1,30 +1,4 @@
-/*
- *  Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without modification, are
- *  permitted provided that the following conditions are met:
- *
- *     1. Redistributions of source code must retain the above copyright notice, this list of
- *        conditions and the following disclaimer.
- *
- *     2. Redistributions in binary form must reproduce the above copyright notice, this list
- *        of conditions and the following disclaimer in the documentation and/or other materials
- *        provided with the distribution.
- *
- *  THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- *  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  The views and conclusions contained in the software and documentation are those of the
- *  authors and should not be interpreted as representing official policies, either expressed
- *  or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.cards.m;
 
 import java.util.UUID;
@@ -47,7 +21,7 @@ import mage.target.common.TargetCardInLibrary;
  *
  * @author andyfries
  */
-public class MaralenOfTheMornsong extends CardImpl {
+public final class MaralenOfTheMornsong extends CardImpl {
 
     public MaralenOfTheMornsong(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.CREATURE}, "{1}{B}{B}");
@@ -60,7 +34,7 @@ public class MaralenOfTheMornsong extends CardImpl {
         // Players can't draw cards.
         this.addAbility(new SimpleStaticAbility(Zone.BATTLEFIELD, new MaralenOfTheMornsongEffect()));
 
-        // At the beginning of each player's draw step, that player loses 3 life, searches his or her library for a card, puts it into his or her hand, then shuffles his or her library.
+        // At the beginning of each player's draw step, that player loses 3 life, searches their library for a card, puts it into their hand, then shuffles their library.
         this.addAbility(new BeginningOfDrawTriggeredAbility(new MaralenOfTheMornsongEffect2(), TargetController.ANY, false));
 
     }
@@ -112,7 +86,7 @@ class MaralenOfTheMornsongEffect2 extends OneShotEffect {
 
     public MaralenOfTheMornsongEffect2() {
         super(Outcome.LoseLife);
-        staticText = "that player loses 3 life, searches his or her library for a card, puts it into his or her hand, then shuffles his or her library";
+        staticText = "that player loses 3 life, searches their library for a card, puts it into their hand, then shuffles their library";
     }
 
     public MaralenOfTheMornsongEffect2(final MaralenOfTheMornsongEffect2 effect) {
@@ -125,14 +99,12 @@ class MaralenOfTheMornsongEffect2 extends OneShotEffect {
         Player player = game.getPlayer(activePlayerId);
         if (player != null) {
             player.loseLife(3, game, false);
-            if (player != null) {
-                TargetCardInLibrary target = new TargetCardInLibrary();
-                if (player.searchLibrary(target, game)) {
-                    player.moveCards(new CardsImpl(target.getTargets()), Zone.HAND, source, game);
-                }
-                player.shuffleLibrary(source, game);
-                return true;
+            TargetCardInLibrary target = new TargetCardInLibrary();
+            if (player.searchLibrary(target, game)) {
+                player.moveCards(new CardsImpl(target.getTargets()), Zone.HAND, source, game);
             }
+            player.shuffleLibrary(source, game);
+            return true;
         }
         return false;
     }

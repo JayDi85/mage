@@ -1,5 +1,7 @@
 package mage.client.util.object;
 
+import mage.utils.StreamUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -55,16 +57,16 @@ public final class SaveObjectUtil {
                 String time = now(DATE_PATTERN);
                 File f = new File("income" + File.separator + name + '_' + time + ".save");
                 if (!f.exists()) {
+                    f.getParentFile().mkdirs();
                     f.createNewFile();
                 }
                 oos = new ObjectOutputStream(new FileOutputStream(f));
                 oos.writeObject(object);
                 oos.close();
 
-            } catch (FileNotFoundException e) {
-                return;
-            } catch (IOException io) {
-                return;
+            } catch (Exception e) {
+            } finally {
+                StreamUtils.closeQuietly(oos);
             }
         }
     }

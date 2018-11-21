@@ -1,53 +1,24 @@
-/*
-* Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without modification, are
-* permitted provided that the following conditions are met:
-*
-*    1. Redistributions of source code must retain the above copyright notice, this list of
-*       conditions and the following disclaimer.
-*
-*    2. Redistributions in binary form must reproduce the above copyright notice, this list
-*       of conditions and the following disclaimer in the documentation and/or other materials
-*       provided with the distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
-* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-* FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
-* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-* NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-* The views and conclusions contained in the software and documentation are those of the
-* authors and should not be interpreted as representing official policies, either expressed
-* or implied, of BetaSteward_at_googlemail.com.
-*/
 
-/*
+
+ /*
  * ConnectDialog.java
  *
  * Created on 20-Jan-2010, 9:37:07 PM
  */
-
 package mage.server.console;
 
-import mage.remote.Connection;
-import mage.remote.Connection.ProxyType;
-import org.apache.log4j.Logger;
-
-import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import javax.swing.*;
+import mage.remote.Connection;
+import mage.remote.Connection.ProxyType;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -60,9 +31,11 @@ public class ConnectDialog extends JDialog {
     private Connection connection;
     private ConnectTask task;
 
-    /** Creates new form ConnectDialog */
+    /**
+     * Creates new form ConnectDialog
+     */
     public ConnectDialog() {
-       initComponents();
+        initComponents();
         cbProxyType.setModel(new DefaultComboBoxModel(Connection.ProxyType.values()));
     }
 
@@ -73,7 +46,7 @@ public class ConnectDialog extends JDialog {
         this.chkAutoConnect.setSelected(Boolean.parseBoolean(ConsoleFrame.getPreferences().get("autoConnect", "false")));
         this.txtProxyServer.setText(ConsoleFrame.getPreferences().get("proxyAddress", "localhost"));
         this.txtProxyPort.setText(ConsoleFrame.getPreferences().get("proxyPort", Integer.toString(17171)));
-        this.cbProxyType.setSelectedItem(Connection.ProxyType.valueOf(ConsoleFrame.getPreferences().get("proxyType", "NONE").toUpperCase()));
+        this.cbProxyType.setSelectedItem(Connection.ProxyType.valueOf(ConsoleFrame.getPreferences().get("proxyType", "NONE").toUpperCase(Locale.ENGLISH)));
         this.txtProxyUserName.setText(ConsoleFrame.getPreferences().get("proxyUsername", ""));
         this.txtPasswordField.setText(ConsoleFrame.getPreferences().get("proxyPassword", ""));
         this.showProxySettings();
@@ -83,17 +56,15 @@ public class ConnectDialog extends JDialog {
     }
 
     private void showProxySettings() {
-        if (cbProxyType.getSelectedItem() == Connection.ProxyType.SOCKS) {
+        if (Objects.equals(cbProxyType.getSelectedItem(), ProxyType.SOCKS)) {
             this.pnlProxy.setVisible(true);
             this.pnlProxyAuth.setVisible(false);
             this.pnlProxySettings.setVisible(true);
-        }
-        else if (cbProxyType.getSelectedItem() == Connection.ProxyType.HTTP) {
+        } else if (Objects.equals(cbProxyType.getSelectedItem(), ProxyType.HTTP)) {
             this.pnlProxy.setVisible(true);
             this.pnlProxyAuth.setVisible(true);
             this.pnlProxySettings.setVisible(true);
-        }
-        else if (cbProxyType.getSelectedItem() == Connection.ProxyType.NONE) {
+        } else if (Objects.equals(cbProxyType.getSelectedItem(), ProxyType.NONE)) {
             this.pnlProxy.setVisible(false);
             this.pnlProxyAuth.setVisible(false);
             this.pnlProxySettings.setVisible(false);
@@ -115,10 +86,10 @@ public class ConnectDialog extends JDialog {
         Arrays.fill(input, '0');
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -377,7 +348,7 @@ public class ConnectDialog extends JDialog {
             JOptionPane.showMessageDialog(rootPane, "Please provide a port number");
             return;
         }
-        if (Integer.valueOf(txtPort.getText()) < 1 || Integer.valueOf(txtPort.getText()) > 65535 ) {
+        if (Integer.valueOf(txtPort.getText()) < 1 || Integer.valueOf(txtPort.getText()) > 65535) {
             JOptionPane.showMessageDialog(rootPane, "Invalid port number");
             txtPort.setText(ConsoleFrame.getPreferences().get("serverPort", Integer.toString(17171)));
             return;
@@ -424,15 +395,15 @@ public class ConnectDialog extends JDialog {
                 if (result) {
                     lblStatus.setText("");
                     connected();
-                }
-                else {
+                } else {
                     lblStatus.setText("Could not connect");
                 }
             } catch (InterruptedException ex) {
                 logger.fatal("Update Players Task error", ex);
             } catch (ExecutionException ex) {
                 logger.fatal("Update Players Task error", ex);
-            } catch (CancellationException ex) {}
+            } catch (CancellationException ex) {
+            }
         }
     }
 
@@ -440,7 +411,6 @@ public class ConnectDialog extends JDialog {
         this.saveSettings();
         this.setVisible(false);
     }
-
 
     private void keyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_keyTyped
         char c = evt.getKeyChar();
@@ -467,7 +437,7 @@ public class ConnectDialog extends JDialog {
             List<String> servers = new ArrayList<>();
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-                System.out.println("Found server: "+inputLine);
+                System.out.println("Found server: " + inputLine);
                 servers.add(inputLine);
             }
 
@@ -491,11 +461,14 @@ public class ConnectDialog extends JDialog {
             }
 
             in.close();
-        } catch(Exception ex) {
-            logger.error(ex,ex);
+        } catch (Exception ex) {
+            logger.error(ex, ex);
         } finally {
             if (in != null) {
-                try { in.close(); } catch (Exception e) {}
+                try {
+                    in.close();
+                } catch (Exception e) {
+                }
             }
         }
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -505,9 +478,8 @@ public class ConnectDialog extends JDialog {
     }//GEN-LAST:event_cbProxyTypeActionPerformed
 
         private void txtPasswordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordFieldActionPerformed
-            // TODO add your handling code here:
+        // TODO add your handling code here:
         }//GEN-LAST:event_txtPasswordFieldActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCancel;

@@ -1,30 +1,3 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
 package mage.server.game;
 
 import java.io.*;
@@ -37,6 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.zip.GZIPOutputStream;
 import mage.MageException;
 import mage.abilities.Ability;
+import mage.abilities.common.PassAbility;
 import mage.cards.Card;
 import mage.cards.Cards;
 import mage.cards.decks.Deck;
@@ -50,12 +24,15 @@ import mage.constants.Zone;
 import mage.game.Game;
 import mage.game.GameException;
 import mage.game.GameOptions;
+import mage.game.GameState;
 import mage.game.Table;
+import mage.game.command.Plane;
 import mage.game.events.Listener;
 import mage.game.events.PlayerQueryEvent;
 import mage.game.events.TableEvent;
 import mage.game.match.MatchPlayer;
 import mage.game.permanent.Permanent;
+import mage.game.turn.Phase;
 import mage.interfaces.Action;
 import mage.players.Player;
 import mage.server.*;
@@ -63,6 +40,7 @@ import mage.server.util.ConfigSettings;
 import mage.server.util.Splitter;
 import mage.server.util.SystemUtil;
 import mage.server.util.ThreadExecutor;
+import mage.utils.StreamUtils;
 import mage.utils.timer.PriorityTimer;
 import mage.view.*;
 import mage.view.ChatMessage.MessageColor;
@@ -288,13 +266,13 @@ public class GameController implements GameCallback {
 
     public void join(UUID userId) {
         UUID playerId = userPlayerMap.get(userId);
-        Optional<User> user = UserManager.instance.getUser(userId);
-        if (userId == null || playerId == null) {
+        if (playerId == null) {
             logger.fatal("Join game failed!");
             logger.fatal("- gameId: " + game.getId());
             logger.fatal("- userId: " + userId);
             return;
         }
+        Optional<User> user = UserManager.instance.getUser(userId);
         if (!user.isPresent()) {
             logger.fatal("User not found : " + userId);
             return;
@@ -668,7 +646,7 @@ public class GameController implements GameCallback {
         } catch (GameException ex) {
             logger.warn(ex.getMessage());
         }
-        addCardsForTesting(game);
+        addCardsForTesting(game, playerId);
         updateGame();
     }
 
@@ -901,17 +879,23 @@ public class GameController implements GameCallback {
     }
 
     public boolean saveGame() {
+        OutputStream file = null;
+        ObjectOutput output = null;
+        OutputStream buffer = null;
         try {
-            OutputStream file = new FileOutputStream("saved/" + game.getId().toString() + ".game");
-            OutputStream buffer = new BufferedOutputStream(file);
-            try (ObjectOutput output = new ObjectOutputStream(new GZIPOutputStream(buffer))) {
-                output.writeObject(game);
-                output.writeObject(game.getGameStates());
-            }
+            file = new FileOutputStream("saved/" + game.getId().toString() + ".game");
+            buffer = new BufferedOutputStream(file);
+            output = new ObjectOutputStream(new GZIPOutputStream(buffer));
+            output.writeObject(game);
+            output.writeObject(game.getGameStates());
             logger.debug("Saved game:" + game.getId());
             return true;
         } catch (IOException ex) {
             logger.fatal("Cannot save game.", ex);
+        } finally {
+            StreamUtils.closeQuietly(file);
+            StreamUtils.closeQuietly(output);
+            StreamUtils.closeQuietly(buffer);
         }
         return false;
     }
@@ -919,12 +903,12 @@ public class GameController implements GameCallback {
     /**
      * Adds cards in player's hands that are specified in config/init.txt.
      */
-    private void addCardsForTesting(Game game) {
-        SystemUtil.addCardsForTesting(game);
+    private void addCardsForTesting(Game game, UUID playerId) {
+        SystemUtil.addCardsForTesting(game, null, game.getPlayer(playerId));
     }
 
     /**
-     * Performas a request to a player
+     * Performs a request to a player
      *
      * @param playerId
      * @param command
@@ -1086,6 +1070,195 @@ public class GameController implements GameCallback {
             return !gameOptions.bannedUsers.contains(user.get().getName());
         }
         return false;
+    }
+
+    public String getGameStateDebugMessage() {
+        if (game == null) {
+            return "";
+        }
+        GameState state = game.getState();
+        if (state == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("<br/>Game State:<br/><font size=-2>");
+        sb.append(state);
+
+        sb.append("<br>Active player is: ");
+        sb.append(game.getPlayer(state.getActivePlayerId()).getName());
+        sb.append("<br>isGameOver: ");
+        sb.append(state.isGameOver());
+        sb.append("<br>Current phase is: ");
+        sb.append(state.getTurn().getPhase());
+        sb.append("<br>getBattlefield: ");
+        sb.append(state.getBattlefield());
+        sb.append("<br>getChoosingPlayerId: ");
+        if (state.getChoosingPlayerId() != null) {
+            sb.append(game.getPlayer(state.getChoosingPlayerId()).getName());
+        } else {
+            sb.append("noone!");
+        }
+        sb.append("<br>getCombat: ");
+        sb.append(state.getCombat());
+        sb.append("<br>getCommand: ");
+        sb.append(state.getCommand());
+        sb.append("<br>getContinuousEffects: ");
+        sb.append(state.getContinuousEffects());
+        sb.append("<br>getCopiedCards: ");
+        sb.append(state.getCopiedCards());
+        sb.append("<br>getDelayed: ");
+        sb.append(state.getDelayed());
+        sb.append("<br>getDesignations: ");
+        sb.append(state.getDesignations());
+        sb.append("<br>getExile: ");
+        sb.append(state.getExile());
+        sb.append("<br>getMonarchId: ");
+        sb.append(state.getMonarchId());
+        sb.append("<br>getNextPermanentOrderNumber: ");
+        sb.append(state.getNextPermanentOrderNumber());
+        sb.append("<br>getPlayerByOrderId: ");
+        if (state.getPlayerByOrderId() != null) {
+            sb.append(game.getPlayer(state.getPlayerByOrderId()).getName());
+        } else {
+            sb.append("noone!");
+        }
+        sb.append("<br>getPlayerList: ");
+        sb.append(state.getPlayerList());
+        sb.append("<br>getPlayers: ");
+        sb.append(state.getPlayers());
+        sb.append("<br><font color=orange>Player with Priority is: ");
+        if (state.getPriorityPlayerId() != null) {
+            sb.append(game.getPlayer(state.getPriorityPlayerId()).getName());
+        } else {
+            sb.append("noone!");
+        }
+        sb.append("</font><br>getRevealed: ");
+        sb.append(state.getRevealed());
+        sb.append("<br>getSpecialActions: ");
+        sb.append(state.getSpecialActions());
+        sb.append("<br>getStack: ");
+        sb.append(state.getStack());
+        sb.append("<br>getStepNum: ");
+        sb.append(state.getStepNum());
+        sb.append("<br>getTurn: ");
+        sb.append(state.getTurn());
+        sb.append("<br>getTurnId: ");
+        sb.append(state.getTurnId());
+        sb.append("<br>getTurnMods: ");
+        sb.append(state.getTurnMods());
+        sb.append("<br>getTurnNum: ");
+        sb.append(state.getTurnNum());
+
+        sb.append("<br>Using plane chase?:" + state.isPlaneChase());
+        if (state.isPlaneChase()) {
+            Plane currentPlane = state.getCurrentPlane();
+            if (currentPlane != null) {
+                sb.append("<br>Current plane:" + currentPlane.getName());
+            }
+        }
+
+        sb.append("<br>Future Timeout:");
+        if (futureTimeout != null) {
+            sb.append("Cancelled?=");
+            sb.append(futureTimeout.isCancelled());
+            sb.append(",,,Done?=");
+            sb.append(futureTimeout.isDone());
+            sb.append(",,,GetDelay?=");
+            sb.append((int) futureTimeout.getDelay(TimeUnit.SECONDS));
+        } else {
+            sb.append("Not using future Timeout!");
+        }
+        sb.append("</font>");
+        return sb.toString();
+    }
+
+    public String attemptToFixGame() {
+        if (game == null) {
+            return "";
+        }
+        GameState state = game.getState();
+        if (state == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("<br/>Game State:<br/><font size=-2>");
+        sb.append(state);
+        boolean fixedAlready = false;
+
+        sb.append("<br>Active player is: ");
+        sb.append(game.getPlayer(state.getActivePlayerId()).getName());
+
+        PassAbility pass = new PassAbility();
+        if (game.getPlayer(state.getActivePlayerId()).hasLeft()) {
+            Player p = game.getPlayer(state.getActivePlayerId());
+            if (p != null) {
+                p.concede(game);
+            }
+            Phase currentPhase = game.getPhase();
+            if (currentPhase != null) {
+                currentPhase.getStep().skipStep(game, state.getActivePlayerId());
+                sb.append("<br>Forcibly passing the phase!");
+                fixedAlready = true;
+            } else {
+                sb.append("<br>Current phase null");
+            }
+            sb.append("<br>Active player has left");
+        }
+
+        sb.append("<br>getChoosingPlayerId: ");
+        if (state.getChoosingPlayerId() != null) {
+            if (game.getPlayer(state.getChoosingPlayerId()).hasLeft()) {
+                Player p = game.getPlayer(state.getChoosingPlayerId());
+                if (p != null) {
+                    p.concede(game);
+                }
+                Phase currentPhase = game.getPhase();
+                if (currentPhase != null && !fixedAlready) {
+                    currentPhase.getStep().endStep(game, state.getActivePlayerId());
+                    fixedAlready = true;
+                    sb.append("<br>Forcibly passing the phase!");
+                } else if (currentPhase == null) {
+                    sb.append("<br>Current phase null");
+                }
+                sb.append("<br>Choosing player has left");
+            }
+        }
+
+        sb.append("<br><font color=orange>Player with Priority is: ");
+        if (state.getPriorityPlayerId() != null) {
+            if (game.getPlayer(state.getPriorityPlayerId()).hasLeft()) {                
+                Player p = game.getPlayer(state.getPriorityPlayerId());
+                if (p != null) {
+                    p.concede(game);
+                }
+                Phase currentPhase = game.getPhase();
+                if (currentPhase != null && !fixedAlready) {
+                    currentPhase.getStep().skipStep(game, state.getActivePlayerId());
+                    fixedAlready = true;
+                    sb.append("<br>Forcibly passing the phase!");
+                }
+            }
+            sb.append(game.getPlayer(state.getPriorityPlayerId()).getName());
+            sb.append("</font>");
+        }
+
+        sb.append("<br>Future Timeout:");
+        if (futureTimeout != null) {
+            sb.append("Cancelled?=");
+            sb.append(futureTimeout.isCancelled());
+            sb.append(",,,Done?=");
+            sb.append(futureTimeout.isDone());
+            sb.append(",,,GetDelay?=");
+            sb.append((int) futureTimeout.getDelay(TimeUnit.SECONDS));
+            if ((int) futureTimeout.getDelay(TimeUnit.SECONDS) < 25) {
+                game.endTurn(pass);
+                sb.append("<br>Forcibly passing the turn!");
+            }
+        } else {
+            sb.append("Not using future Timeout!");
+        }
+        sb.append("</font>");
+        return sb.toString();
     }
 
 }

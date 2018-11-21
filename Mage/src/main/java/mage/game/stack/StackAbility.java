@@ -1,30 +1,3 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
 package mage.game.stack;
 
 import java.util.ArrayList;
@@ -50,9 +23,11 @@ import mage.constants.*;
 import mage.game.Game;
 import mage.game.events.GameEvent;
 import mage.game.events.ZoneChangeEvent;
+import mage.game.permanent.Permanent;
 import mage.players.Player;
 import mage.target.Target;
 import mage.target.Targets;
+import mage.target.targetadjustment.TargetAdjuster;
 import mage.util.GameLog;
 import mage.util.SubTypeList;
 import mage.watchers.Watcher;
@@ -74,7 +49,7 @@ public class StackAbility extends StackObjImpl implements Ability {
     private UUID controllerId;
     private String name;
     private String expansionSetCode;
-    private TargetAdjustment targetAdjustment = TargetAdjustment.NONE;
+    private TargetAdjuster targetAdjuster = null;
 
     public StackAbility(Ability ability, UUID controllerId) {
         this.ability = ability;
@@ -87,7 +62,8 @@ public class StackAbility extends StackObjImpl implements Ability {
         this.controllerId = stackAbility.controllerId;
         this.name = stackAbility.name;
         this.expansionSetCode = stackAbility.expansionSetCode;
-        this.targetAdjustment = stackAbility.targetAdjustment;
+        this.targetAdjuster = stackAbility.targetAdjuster;
+        this.targetChanged = stackAbility.targetChanged;
     }
 
     @Override
@@ -99,14 +75,14 @@ public class StackAbility extends StackObjImpl implements Ability {
     public boolean resolve(Game game) {
         if (ability.getTargets().stillLegal(ability, game) || !canFizzle()) {
             boolean result = ability.resolve(game);
-            game.getStack().remove(this);
+            game.getStack().remove(this, game);
             return result;
         }
         if (!game.isSimulation()) {
             game.informPlayers("Ability has been fizzled: " + getRule());
         }
         counter(null, game);
-        game.getStack().remove(this);
+        game.getStack().remove(this, game);
         return false;
     }
 
@@ -529,12 +505,22 @@ public class StackAbility extends StackObjImpl implements Ability {
 
     @Override
     public MageObject getSourceObject(Game game) {
-        return game.getBaseObject(getSourceId());
+        return this.ability.getSourceObject(game);
     }
 
     @Override
     public MageObject getSourceObjectIfItStillExists(Game game) {
-        throw new UnsupportedOperationException("Not supported.");
+        return this.ability.getSourceObjectIfItStillExists(game);
+    }
+
+    @Override
+    public Permanent getSourcePermanentIfItStillExists(Game game) {
+        return this.ability.getSourcePermanentIfItStillExists(game);
+    }
+
+    @Override
+    public void setSourceObjectZoneChangeCounter(int zoneChangeCounter) {
+        ability.setSourceObjectZoneChangeCounter(zoneChangeCounter);
     }
 
     @Override
@@ -543,8 +529,8 @@ public class StackAbility extends StackObjImpl implements Ability {
     }
 
     @Override
-    public void setSourceObject(MageObject sourceObject, Game game) {
-        throw new UnsupportedOperationException("Not supported.");
+    public Permanent getSourcePermanentOrLKI(Game game) {
+        return ability.getSourcePermanentOrLKI(game);
     }
 
     @Override
@@ -615,12 +601,19 @@ public class StackAbility extends StackObjImpl implements Ability {
     }
 
     @Override
-    public void setTargetAdjustment(TargetAdjustment targetAdjustment) {
-        this.targetAdjustment = targetAdjustment;
+    public void setTargetAdjuster(TargetAdjuster targetAdjuster) {
+        this.targetAdjuster = targetAdjuster;
     }
 
     @Override
-    public TargetAdjustment getTargetAdjustment() {
-        return targetAdjustment;
+    public TargetAdjuster getTargetAdjuster() {
+        return targetAdjuster;
+    }
+
+    @Override
+    public void adjustTargets(Game game) {
+        if (targetAdjuster != null) {
+            targetAdjuster.adjustTargets(this, game);
+        }
     }
 }

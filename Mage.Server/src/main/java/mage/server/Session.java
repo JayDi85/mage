@@ -1,30 +1,4 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.server;
 
 import java.util.*;
@@ -66,8 +40,10 @@ public class Session {
     private final Date timeConnected;
     private boolean isAdmin = false;
     private final AsynchInvokerCallbackHandler callbackHandler;
+    private boolean valid = true;
 
     private final ReentrantLock lock;
+    private final ReentrantLock callBackLock;
 
     public Session(String sessionId, InvokerCallbackHandler callbackHandler) {
         this.sessionId = sessionId;
@@ -75,6 +51,7 @@ public class Session {
         this.isAdmin = false;
         this.timeConnected = new Date();
         this.lock = new ReentrantLock();
+        this.callBackLock = new ReentrantLock();
     }
 
     public String registerUser(String userName, String password, String email) throws MageException {
@@ -370,16 +347,27 @@ public class Session {
     }
 
     public void fireCallback(final ClientCallback call) {
+        boolean lockSet = false;
         try {
-            call.setMessageId(messageId++);
-            callbackHandler.handleCallbackOneway(new Callback(call));
+            if (valid && callBackLock.tryLock(50, TimeUnit.MILLISECONDS)) {
+                call.setMessageId(messageId++);
+                lockSet = true;
+                callbackHandler.handleCallbackOneway(new Callback(call));
+            }
+        } catch (InterruptedException ex) {
+            logger.warn("SESSION LOCK - fireCallback - userId: " + userId + " messageId: " + call.getMessageId(), ex);
         } catch (HandleCallbackException ex) {
+            this.valid = false;
             UserManager.instance.getUser(userId).ifPresent(user -> {
                 user.setUserState(User.UserState.Disconnected);
-                logger.warn("SESSION CALLBACK EXCEPTION - " + user.getName() + " userId " + userId + " - cause: " + getBasicCause(ex).toString());
+                logger.warn("SESSION CALLBACK EXCEPTION - " + user.getName() + " userId " + userId + " messageId: " + call.getMessageId() + " - cause: " + getBasicCause(ex).toString());
                 logger.trace("Stack trace:", ex);
                 SessionManager.instance.disconnect(sessionId, LostConnection);
             });
+        } finally {
+            if (lockSet) {
+                callBackLock.unlock();
+            }
         }
     }
 

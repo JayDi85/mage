@@ -9,8 +9,9 @@ import java.util.Map;
 import mage.cards.repository.ExpansionInfo;
 import mage.cards.repository.ExpansionRepository;
 import mage.constants.SetType;
+import static mage.constants.SetType.EXPANSION;
+import static mage.constants.SetType.SUPPLEMENTAL;
 import mage.deck.Standard;
-
 
 /**
  * Utility class for constructed formats (expansions and other editions).
@@ -65,6 +66,13 @@ public final class ConstructedFormats {
         underlyingSetCodesPerFormat.put(CUSTOM, new ArrayList<>());
         final Map<String, ExpansionInfo> expansionInfo = new HashMap<>();
         formats.clear(); // prevent NPE on sorting if this is not the first try
+
+        // Because this is also called in Netbeans Design view, but the object does not exist in that case,
+        // we have to return here to prevent exception in design view. (Does not hurt at design time)
+        if (!ExpansionRepository.instance.instanceInitialized) {
+            return;
+        }
+
         for (ExpansionInfo set : ExpansionRepository.instance.getAll()) {
             expansionInfo.put(set.getName(), set);
             formats.add(set.getName());
@@ -82,14 +90,16 @@ public final class ConstructedFormats {
                 if (STANDARD_CARDS.getSetCodes().contains(set.getCode())) {
                     underlyingSetCodesPerFormat.get(STANDARD).add(set.getCode());
                 }
-                if (set.getReleaseDate().after(extendedDate)) {
-                    underlyingSetCodesPerFormat.get(EXTENDED).add(set.getCode());
-                }
-                if (set.getReleaseDate().after(frontierDate)) {
-                    underlyingSetCodesPerFormat.get(FRONTIER).add(set.getCode());
-                }
-                if (set.getReleaseDate().after(modernDate)) {
-                    underlyingSetCodesPerFormat.get(MODERN).add(set.getCode());
+                if (set.getType() != SetType.SUPPLEMENTAL_STANDARD_LEGAL) {
+                    if (set.getReleaseDate().after(extendedDate) && (set.getType() == SetType.EXPANSION || set.getType() == SetType.CORE)) {
+                        underlyingSetCodesPerFormat.get(EXTENDED).add(set.getCode());
+                    }
+                    if (set.getReleaseDate().after(frontierDate) && (set.getType() == SetType.EXPANSION || set.getType() == SetType.CORE)) {
+                        underlyingSetCodesPerFormat.get(FRONTIER).add(set.getCode());
+                    }
+                    if (set.getReleaseDate().after(modernDate) && (set.getType() == SetType.EXPANSION || set.getType() == SetType.CORE)) {
+                        underlyingSetCodesPerFormat.get(MODERN).add(set.getCode());
+                    }
                 }
             }
 

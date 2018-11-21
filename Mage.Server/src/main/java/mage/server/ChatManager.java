@@ -1,33 +1,8 @@
-/*
-* Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without modification, are
-* permitted provided that the following conditions are met:
-*
-*    1. Redistributions of source code must retain the above copyright notice, this list of
-*       conditions and the following disclaimer.
-*
-*    2. Redistributions in binary form must reproduce the above copyright notice, this list
-*       of conditions and the following disclaimer in the documentation and/or other materials
-*       provided with the distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
-* WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-* FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
-* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-* NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-* The views and conclusions contained in the software and documentation are those of the
-* authors and should not be interpreted as representing official policies, either expressed
-* or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.server;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -37,6 +12,8 @@ import java.util.regex.Pattern;
 import mage.cards.repository.CardInfo;
 import mage.cards.repository.CardRepository;
 import mage.server.exceptions.UserNotFoundException;
+import mage.server.game.GameController;
+import mage.server.game.GameManager;
 import mage.server.util.SystemUtil;
 import mage.view.ChatMessage.MessageColor;
 import mage.view.ChatMessage.MessageType;
@@ -195,8 +172,8 @@ public enum ChatManager {
             + "<br/>\\whisper or \\w [player name] [text] - whisper to the player with the given name"
             + "<br/>\\card Card Name - Print oracle text for card"
             + "<br/>[Card Name] - Show a highlighted card name"
-            + "<br/>\\ignore - shows current ignore list on this server."
-            + "<br/>\\ignore [username] - add a username to your ignore list on this server."
+            + "<br/>\\ignore - shows your ignore list on this server."
+            + "<br/>\\ignore [username] - add username to ignore list (they won't be able to chat or join to your game)."
             + "<br/>\\unignore [username] - remove a username from your ignore list on this server.";
 
     final Pattern getCardTextPattern = Pattern.compile("^.card *(.*)");
@@ -220,8 +197,50 @@ public enum ChatManager {
             chatSessions.get(chatId).broadcastInfoToUser(user, message);
             return true;
         }
+        if (command.startsWith("GAME")) {
+            message += "<br/>" + GameManager.instance.getChatId(chatId);
+            ChatSession session = chatSessions.get(chatId);
+            if (session != null && session.getInfo() != null) {
+                String gameId = session.getInfo();
+                if (gameId.startsWith("Game ")) {
+                    UUID id = java.util.UUID.fromString(gameId.substring(5, gameId.length()));
+                    for (Entry<UUID, GameController> entry : GameManager.instance.getGameController().entrySet()) {
+                        if (entry.getKey().equals(id)) {
+                            GameController controller = entry.getValue();
+                            if (controller != null) {
+                                message += controller.getGameStateDebugMessage();
+                                chatSessions.get(chatId).broadcastInfoToUser(user, message);
+                            }
+                        }
+                    }
+
+                }
+            }
+            return true;
+        }
+        if (command.startsWith("FIX")) {
+            message += "<br/>" + GameManager.instance.getChatId(chatId);
+            ChatSession session = chatSessions.get(chatId);
+            if (session != null && session.getInfo() != null) {
+                String gameId = session.getInfo();
+                if (gameId.startsWith("Game ")) {
+                    UUID id = java.util.UUID.fromString(gameId.substring(5, gameId.length()));
+                    for (Entry<UUID, GameController> entry : GameManager.instance.getGameController().entrySet()) {
+                        if (entry.getKey().equals(id)) {
+                            GameController controller = entry.getValue();
+                            if (controller != null) {
+                                message += controller.attemptToFixGame();
+                                chatSessions.get(chatId).broadcastInfoToUser(user, message);
+                            }
+                        }
+                    }
+
+                }
+            }
+            return true;
+        }        
         if (command.startsWith("CARD ")) {
-            Matcher matchPattern = getCardTextPattern.matcher(message.toLowerCase());
+            Matcher matchPattern = getCardTextPattern.matcher(message.toLowerCase(Locale.ENGLISH));
             if (matchPattern.find()) {
                 String cardName = matchPattern.group(1);
                 CardInfo cardInfo = CardRepository.instance.findPreferedCoreExpansionCard(cardName, true);
@@ -289,9 +308,18 @@ public enum ChatManager {
     public void sendReconnectMessage(UUID userId) {
         UserManager.instance.getUser(userId).ifPresent(user
                 -> getChatSessions()
-                        .stream()
-                        .filter(chat -> chat.hasUser(userId))
-                        .forEach(chatSession -> chatSession.broadcast(null, user.getName() + " has reconnected", MessageColor.BLUE, true, MessageType.STATUS, null)));
+                .stream()
+                .filter(chat -> chat.hasUser(userId))
+                .forEach(chatSession -> chatSession.broadcast(null, user.getName() + " has reconnected", MessageColor.BLUE, true, MessageType.STATUS, null)));
+
+    }
+
+    public void sendLostConnectionMessage(UUID userId, DisconnectReason reason) {
+        UserManager.instance.getUser(userId).ifPresent(user
+                -> getChatSessions()
+                .stream()
+                .filter(chat -> chat.hasUser(userId))
+                .forEach(chatSession -> chatSession.broadcast(null, user.getName() + reason.getMessage(), MessageColor.BLUE, true, MessageType.STATUS, null)));
 
     }
 

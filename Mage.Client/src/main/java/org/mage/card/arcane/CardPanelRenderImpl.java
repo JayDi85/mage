@@ -9,16 +9,13 @@ import mage.view.CardView;
 import mage.view.CounterView;
 import mage.view.PermanentView;
 import mage.view.StackAbilityView;
-import net.java.truevfs.access.TFile;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
-import org.mage.plugins.card.dl.sources.DirectLinksForDownload;
 import org.mage.plugins.card.images.ImageCache;
 import mage.client.constants.Constants;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.Map;
 import java.util.UUID;
 
@@ -302,7 +299,7 @@ public class CardPanelRenderImpl extends CardPanel {
                 = new CardPanelAttributes(cardWidth, cardHeight, isChoosable(), isSelected());
 
         // Draw card itself
-        cardRenderer.draw(g2d, attribs);
+        cardRenderer.draw(g2d, attribs, image);
 
         // Done
         g2d.dispose();

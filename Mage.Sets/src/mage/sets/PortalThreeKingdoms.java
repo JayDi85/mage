@@ -1,30 +1,4 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.sets;
 
 import mage.cards.ExpansionSet;
@@ -35,7 +9,7 @@ import mage.constants.SetType;
  *
  * @author LevelX2
  */
-public class PortalThreeKingdoms extends ExpansionSet {
+public final class PortalThreeKingdoms extends ExpansionSet {
 
     private static final PortalThreeKingdoms instance = new PortalThreeKingdoms();
 
@@ -83,6 +57,7 @@ public class PortalThreeKingdoms extends ExpansionSet {
         cards.add(new SetCardInfo("Dong Zhou, the Tyrant", 109, Rarity.RARE, mage.cards.d.DongZhouTheTyrant.class));
         cards.add(new SetCardInfo("Eightfold Maze", 2, Rarity.RARE, mage.cards.e.EightfoldMaze.class));
         cards.add(new SetCardInfo("Empty City Ruse", 3, Rarity.UNCOMMON, mage.cards.e.EmptyCityRuse.class));
+        cards.add(new SetCardInfo("Eunuchs' Intrigues", 110, Rarity.UNCOMMON, mage.cards.e.EunuchsIntrigues.class));
         cards.add(new SetCardInfo("Exhaustion", 42, Rarity.RARE, mage.cards.e.Exhaustion.class));
         cards.add(new SetCardInfo("Extinguish", 43, Rarity.COMMON, mage.cards.e.Extinguish.class));
         cards.add(new SetCardInfo("False Defeat", 4, Rarity.COMMON, mage.cards.f.FalseDefeat.class));
@@ -99,6 +74,7 @@ public class PortalThreeKingdoms extends ExpansionSet {
         cards.add(new SetCardInfo("Ghostly Visit", 76, Rarity.COMMON, mage.cards.g.GhostlyVisit.class));
         cards.add(new SetCardInfo("Guan Yu's 1,000-Li March", 7, Rarity.RARE, mage.cards.g.GuanYus1000LiMarch.class));
         cards.add(new SetCardInfo("Guan Yu, Sainted Warrior", 6, Rarity.RARE, mage.cards.g.GuanYuSaintedWarrior.class));
+        cards.add(new SetCardInfo("Heavy Fog", 136, Rarity.UNCOMMON, mage.cards.h.HeavyFog.class));
         cards.add(new SetCardInfo("Huang Zhong, Shu General", 8, Rarity.RARE, mage.cards.h.HuangZhongShuGeneral.class));
         cards.add(new SetCardInfo("Hua Tuo, Honored Physician", 137, Rarity.RARE, mage.cards.h.HuaTuoHonoredPhysician.class));
         cards.add(new SetCardInfo("Hunting Cheetah", 138, Rarity.UNCOMMON, mage.cards.h.HuntingCheetah.class));
@@ -109,7 +85,8 @@ public class PortalThreeKingdoms extends ExpansionSet {
         cards.add(new SetCardInfo("Island", 169, Rarity.LAND, mage.cards.basiclands.Island.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Island", 170, Rarity.LAND, mage.cards.basiclands.Island.class, NON_FULL_USE_VARIOUS));
         cards.add(new SetCardInfo("Island", 171, Rarity.LAND, mage.cards.basiclands.Island.class, NON_FULL_USE_VARIOUS));
-        cards.add(new SetCardInfo("Kongming, \"Sleeping Dragon\"", 9, Rarity.RARE, mage.cards.k.KongmingSleepingDragon.class));
+        cards.add(new SetCardInfo("Kongming, 'Sleeping Dragon'", 9, Rarity.RARE, mage.cards.k.KongmingSleepingDragon.class));
+        cards.add(new SetCardInfo("Kongming's Contraptions", 10, Rarity.RARE, mage.cards.k.KongmingsContraptions.class));
         cards.add(new SetCardInfo("Lady Sun", 45, Rarity.RARE, mage.cards.l.LadySun.class));
         cards.add(new SetCardInfo("Lady Zhurong, Warrior Queen", 139, Rarity.RARE, mage.cards.l.LadyZhurongWarriorQueen.class));
         cards.add(new SetCardInfo("Liu Bei, Lord of Shu", 11, Rarity.RARE, mage.cards.l.LiuBeiLordOfShu.class));
@@ -185,6 +162,7 @@ public class PortalThreeKingdoms extends ExpansionSet {
         cards.add(new SetCardInfo("Virtuous Charge", 29, Rarity.COMMON, mage.cards.v.VirtuousCharge.class));
         cards.add(new SetCardInfo("Volunteer Militia", 30, Rarity.COMMON, mage.cards.v.VolunteerMilitia.class));
         cards.add(new SetCardInfo("Warrior's Oath", 124, Rarity.RARE, mage.cards.w.WarriorsOath.class));
+        cards.add(new SetCardInfo("Warrior's Stand", 31, Rarity.UNCOMMON, mage.cards.w.WarriorsStand.class));
         cards.add(new SetCardInfo("Wei Ambush Force", 85, Rarity.COMMON, mage.cards.w.WeiAmbushForce.class));
         cards.add(new SetCardInfo("Wei Assassins", 86, Rarity.UNCOMMON, mage.cards.w.WeiAssassins.class));
         cards.add(new SetCardInfo("Wei Elite Companions", 87, Rarity.UNCOMMON, mage.cards.w.WeiEliteCompanions.class));

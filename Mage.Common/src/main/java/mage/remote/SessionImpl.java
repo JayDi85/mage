@@ -1,38 +1,15 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.remote;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import javax.swing.*;
 import mage.MageException;
 import mage.cards.decks.DeckCardLists;
 import mage.cards.repository.CardInfo;
@@ -87,6 +64,7 @@ public class SessionImpl implements Session {
     private static boolean debugMode = false;
 
     private boolean canceled = false;
+    private boolean jsonLogActive = false;
 
     static {
         debugMode = System.getProperty("debug.mage") != null;
@@ -799,6 +777,9 @@ public class SessionImpl implements Session {
     public boolean sendPlayerUUID(UUID gameId, UUID data) {
         try {
             if (isConnected()) {
+                ActionData actionData = new ActionData("SEND_PLAYER_UUID", gameId, getSessionId());
+                actionData.value = data;
+                appendJsonLog(actionData);
                 server.sendPlayerUUID(gameId, sessionId, data);
                 return true;
             }
@@ -814,6 +795,10 @@ public class SessionImpl implements Session {
     public boolean sendPlayerBoolean(UUID gameId, boolean data) {
         try {
             if (isConnected()) {
+                ActionData actionData = new ActionData("SEND_PLAYER_BOOLEAN", gameId, getSessionId());
+                actionData.value = data;
+                appendJsonLog(actionData);
+
                 server.sendPlayerBoolean(gameId, sessionId, data);
                 return true;
             }
@@ -829,6 +814,10 @@ public class SessionImpl implements Session {
     public boolean sendPlayerInteger(UUID gameId, int data) {
         try {
             if (isConnected()) {
+                ActionData actionData = new ActionData("SEND_PLAYER_INTEGER", gameId, getSessionId());
+                actionData.value = data;
+                appendJsonLog(actionData);
+
                 server.sendPlayerInteger(gameId, sessionId, data);
                 return true;
             }
@@ -844,6 +833,10 @@ public class SessionImpl implements Session {
     public boolean sendPlayerString(UUID gameId, String data) {
         try {
             if (isConnected()) {
+                ActionData actionData = new ActionData("SEND_PLAYER_STRING", gameId, getSessionId());
+                actionData.value = data;
+                appendJsonLog(actionData);
+
                 server.sendPlayerString(gameId, sessionId, data);
                 return true;
             }
@@ -859,6 +852,9 @@ public class SessionImpl implements Session {
     public boolean sendPlayerManaType(UUID gameId, UUID playerId, ManaType data) {
         try {
             if (isConnected()) {
+                ActionData actionData = new ActionData("SEND_PLAYER_MANA_TYPE", gameId, getSessionId());
+                actionData.value = data;
+                appendJsonLog(actionData);
                 server.sendPlayerManaType(gameId, playerId, sessionId, data);
                 return true;
             }
@@ -868,6 +864,25 @@ public class SessionImpl implements Session {
             handleThrowable(t);
         }
         return false;
+    }
+
+    @Override
+    public void appendJsonLog(ActionData actionData) {
+        if (isJsonLogActive()) {
+            String dir = "gamelogsJson";
+            File saveDir = new File(dir);
+            //Existence check
+            if (!saveDir.exists()) {
+                saveDir.mkdirs();
+            }
+            actionData.sessionId = getSessionId();
+            String logFileName = dir + File.separator + "game-" + actionData.gameId + ".json";
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, true)))) {
+                out.println(actionData.toJson());
+            } catch (IOException e) {
+                logger.error("Cant write JSON game log file - " + logFileName, e);
+            }
+        }
     }
 
     @Override
@@ -1275,6 +1290,11 @@ public class SessionImpl implements Session {
     public boolean sendPlayerAction(PlayerAction passPriorityAction, UUID gameId, Object data) {
         try {
             if (isConnected()) {
+                ActionData actionData = new ActionData("SEND_PLAYER_ACTION", gameId, getSessionId());
+
+                actionData.value = passPriorityAction + (data != null ? " " + data.toString() : "");
+                appendJsonLog(actionData);
+
                 server.sendPlayerAction(passPriorityAction, gameId, sessionId, data);
                 return true;
             }
@@ -1437,12 +1457,9 @@ public class SessionImpl implements Session {
     @Override
     public boolean endUserSession(String userSessionId) {
         try {
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you mean to end userSessionId " + userSessionId + '?', "WARNING",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                if (isConnected()) {
-                    server.endUserSession(sessionId, userSessionId);
-                    return true;
-                }
+            if (isConnected()) {
+                server.endUserSession(sessionId, userSessionId);
+                return true;
             }
         } catch (MageException ex) {
             handleMageException(ex);
@@ -1455,12 +1472,9 @@ public class SessionImpl implements Session {
     @Override
     public boolean muteUserChat(String userName, long durationMinutes) {
         try {
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you mean to mute user " + userName + " for " + durationMinutes + " minutes?", "WARNING",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                if (isConnected()) {
-                    server.muteUser(sessionId, userName, durationMinutes);
-                    return true;
-                }
+            if (isConnected()) {
+                server.muteUser(sessionId, userName, durationMinutes);
+                return true;
             }
         } catch (MageException ex) {
             handleMageException(ex);
@@ -1473,12 +1487,9 @@ public class SessionImpl implements Session {
     @Override
     public boolean setActivation(String userName, boolean active) {
         try {
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you mean to set active to " + active + " for user: " + userName + '?', "WARNING",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                if (isConnected()) {
-                    server.setActivation(sessionId, userName, active);
-                    return true;
-                }
+            if (isConnected()) {
+                server.setActivation(sessionId, userName, active);
+                return true;
             }
         } catch (MageException ex) {
             handleMageException(ex);
@@ -1491,20 +1502,9 @@ public class SessionImpl implements Session {
     @Override
     public boolean toggleActivation(String userName) {
         try {
-            if (JOptionPane.showConfirmDialog(null, "Did you want to set user: " + userName + " to active?", "WARNING",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                return setActivation(userName, true);
-            }
-            if (JOptionPane.showConfirmDialog(null, "Did you want to set user: " + userName + " to INactive?", "WARNING",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                return setActivation(userName, false);
-            }
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you mean to toggle activation for user: " + userName + '?', "WARNING",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                if (isConnected()) {
-                    server.toggleActivation(sessionId, userName);
-                    return true;
-                }
+            if (isConnected()) {
+                server.toggleActivation(sessionId, userName);
+                return true;
             }
         } catch (MageException ex) {
             handleMageException(ex);
@@ -1517,12 +1517,9 @@ public class SessionImpl implements Session {
     @Override
     public boolean lockUser(String userName, long durationMinute) {
         try {
-            if (JOptionPane.showConfirmDialog(null, "Are you sure you mean to lock user: " + userName + " for " + durationMinute + " minutes?", "WARNING",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                if (isConnected()) {
-                    server.lockUser(sessionId, userName, durationMinute);
-                    return true;
-                }
+            if (isConnected()) {
+                server.lockUser(sessionId, userName, durationMinute);
+                return true;
             }
         } catch (MageException ex) {
             handleMageException(ex);
@@ -1619,6 +1616,16 @@ public class SessionImpl implements Session {
         } else {
             return "<no server state>";
         }
+    }
+
+    @Override
+    public boolean isJsonLogActive() {
+        return jsonLogActive;
+    }
+
+    @Override
+    public void setJsonLogActive(boolean jsonLogActive) {
+        this.jsonLogActive = jsonLogActive;
     }
 
 }

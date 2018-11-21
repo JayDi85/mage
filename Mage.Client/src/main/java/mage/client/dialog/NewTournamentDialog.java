@@ -1,30 +1,4 @@
-/*
- *  Copyright 2011 BetaSteward_at_googlemail.com. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without modification, are
- *  permitted provided that the following conditions are met:
- *
- *     1. Redistributions of source code must retain the above copyright notice, this list of
- *        conditions and the following disclaimer.
- *
- *     2. Redistributions in binary form must reproduce the above copyright notice, this list
- *        of conditions and the following disclaimer in the documentation and/or other materials
- *        provided with the distribution.
- *
- *  THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- *  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  The views and conclusions contained in the software and documentation are those of the
- *  authors and should not be interpreted as representing official policies, either expressed
- *  or implied, of BetaSteward_at_googlemail.com.
- */
+
 
  /*
  * NewTournamentDialog.java
@@ -35,11 +9,14 @@ package mage.client.dialog;
 
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
-
 import mage.cards.decks.Deck;
 import mage.cards.decks.importer.DeckImporterUtil;
 import mage.cards.repository.ExpansionInfo;
@@ -47,6 +24,8 @@ import mage.cards.repository.ExpansionRepository;
 import mage.client.MageFrame;
 import mage.client.SessionHandler;
 import mage.client.table.TournamentPlayerPanel;
+import mage.client.util.IgnoreList;
+import mage.client.util.gui.FastSearchUtil;
 import mage.constants.MatchTimeLimit;
 import mage.constants.MultiplayerAttackOption;
 import mage.constants.RangeOfInfluence;
@@ -76,7 +55,7 @@ public class NewTournamentDialog extends MageDialog {
     private RandomPacksSelectorDialog randomPackSelector;
     private JTextArea txtRandomPacks;
     private final List<TournamentPlayerPanel> players = new ArrayList<>();
-    private final List<JComboBox> packs = new ArrayList<>();
+    private final List<JPanel> packPanels = new ArrayList<>();
     private static final int CONSTRUCTION_TIME_MIN = 6;
     private static final int CONSTRUCTION_TIME_MAX = 30;
     private boolean isRandom = false;
@@ -119,6 +98,7 @@ public class NewTournamentDialog extends MageDialog {
                 tournamentPlayerPanel.init(i++);
             }
             cbAllowSpectators.setSelected(true);
+            cbPlaneChase.setSelected(false);
             this.setModal(true);
             this.setLocation(150, 100);
         }
@@ -169,6 +149,7 @@ public class NewTournamentDialog extends MageDialog {
         jLabel6 = new javax.swing.JLabel();
         cbDraftTiming = new javax.swing.JComboBox();
         cbAllowSpectators = new javax.swing.JCheckBox();
+        cbPlaneChase = new javax.swing.JCheckBox();
         lblPlayer1 = new javax.swing.JLabel();
         lblConstructionTime = new javax.swing.JLabel();
         chkRollbackTurnsAllowed = new javax.swing.JCheckBox();
@@ -282,6 +263,9 @@ public class NewTournamentDialog extends MageDialog {
         cbAllowSpectators.setText("Allow spectators");
         cbAllowSpectators.setToolTipText("Allow other players to watch the games of this table.");
 
+        cbPlaneChase.setText("Use Plane Chase");
+        cbPlaneChase.setToolTipText("Use Plane Chase variant for the tournament.");
+
         lblPlayer1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         lblPlayer1.setText("Player 1 (You)");
 
@@ -375,7 +359,9 @@ public class NewTournamentDialog extends MageDialog {
                                                         .addGroup(layout.createSequentialGroup()
                                                                 .addComponent(spnNumRounds, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(cbAllowSpectators))))
+                                                                .addComponent(cbAllowSpectators)
+                                                                .addComponent(cbPlaneChase)
+                                                                )))
                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                                 .addGap(0, 0, Short.MAX_VALUE)
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -487,6 +473,7 @@ public class NewTournamentDialog extends MageDialog {
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                                                 .addComponent(cbAllowSpectators, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                                .addComponent(cbPlaneChase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                                 .addComponent(spnNumRounds, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                                 .addComponent(lblNumRounds))
                                                         .addComponent(lblNbrPlayers, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -533,6 +520,7 @@ public class NewTournamentDialog extends MageDialog {
         tOptions.setPassword(txtPassword.getText());
         tOptions.getPlayerTypes().add(PlayerType.HUMAN);
         tOptions.setWatchingAllowed(cbAllowSpectators.isSelected());
+        tOptions.setPlaneChase(cbPlaneChase.isSelected());
         tOptions.setQuitRatio((Integer) spnQuitRatio.getValue());
         for (TournamentPlayerPanel player : players) {
             tOptions.getPlayerTypes().add((PlayerType) player.getPlayerType().getSelectedItem());
@@ -586,8 +574,13 @@ public class NewTournamentDialog extends MageDialog {
                     tOptions.getLimitedOptions().getSetCodes().addAll(selected);
                 }
             } else {
-                for (JComboBox pack : packs) {
-                    tOptions.getLimitedOptions().getSetCodes().add(((ExpansionInfo) pack.getSelectedItem()).getCode());
+                for (JPanel panel : packPanels) {
+                    JComboBox combo = findComboInComponent(panel);
+                    if (combo != null) {
+                        tOptions.getLimitedOptions().getSetCodes().add(((ExpansionInfo) combo.getSelectedItem()).getCode());
+                    } else {
+                        logger.error("Can't find combo component in " + panel.toString());
+                    }
                 }
             }
             tOptions.getMatchOptions().setDeckType("Limited");
@@ -602,6 +595,9 @@ public class NewTournamentDialog extends MageDialog {
             tOptions.getMatchOptions().setGameType(((GameTypeView) this.cbGameType.getSelectedItem()).getName());
             tOptions.getMatchOptions().setLimited(false);
         }
+
+        String serverAddress = SessionHandler.getSession().getServerHostname().orElseGet(() -> "");
+        tOptions.getMatchOptions().setBannedUsers(IgnoreList.ignoreList(serverAddress));
 
         tOptions.getMatchOptions().setMatchTimeLimit((MatchTimeLimit) this.cbTimeLimit.getSelectedItem());
         tOptions.getMatchOptions().setSkillLevel((SkillLevel) this.cbSkillLevel.getSelectedItem());
@@ -758,7 +754,6 @@ public class NewTournamentDialog extends MageDialog {
         this.spnNumPlayers.setModel(new SpinnerNumberModel(numPlayers, tournamentType.getMinPlayers(), tournamentType.getMaxPlayers(), 1));
         this.spnNumPlayers.setEnabled(tournamentType.getMinPlayers() != tournamentType.getMaxPlayers());
         createPlayers((Integer) spnNumPlayers.getValue() - 1);
-
         this.spnNumSeats.setModel(new SpinnerNumberModel(2, 2, tournamentType.getMaxPlayers(), 1));
 
         if (tournamentType.isLimited()) {
@@ -884,34 +879,88 @@ public class NewTournamentDialog extends MageDialog {
     }
 
     private void createPacks(int numPacks) {
-        while (packs.size() > numPacks) {
-            pnlPacks.remove(packs.get(packs.size() - 1));
-            packs.remove(packs.size() - 1);
+        while (packPanels.size() > numPacks) {
+            pnlPacks.remove(packPanels.get(packPanels.size() - 1));
+            packPanels.remove(packPanels.size() - 1);
         }
-        while (packs.size() < numPacks) {
+        while (packPanels.size() < numPacks) {
+            // SELECT PACK
+            // panel
+            JPanel setPanel = new JPanel();
+            setPanel.setLayout(new javax.swing.BoxLayout(setPanel, javax.swing.BoxLayout.LINE_AXIS));
+            setPanel.setOpaque(false);
+            //setPanel.setPreferredSize(new Dimension(200, 25));
+            //setPanel.setMaximumSize(new Dimension(200, 25));
+            pnlPacks.add(setPanel);
+            packPanels.add(setPanel); // for later access
+            // combo set
             JComboBox pack = new JComboBox();
+            pack = new JComboBox();
             pack.setModel(new DefaultComboBoxModel(ExpansionRepository.instance.getWithBoostersSortedByReleaseDate()));
-            pnlPacks.add(pack);
-            packs.add(pack);
             pack.addActionListener(evt -> packActionPerformed(evt));
+            pack.setAlignmentX(0.0F);
+            pack.setMinimumSize(new Dimension(50, 25));
+            pack.setPreferredSize(new Dimension(50, 25));
+            pack.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
+            setPanel.add(pack);
+            // search button
+            JButton searchButton = new JButton();
+            searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/buttons/search_24.png")));
+            searchButton.setToolTipText("Search and select from list");
+            searchButton.setAlignmentX(1.0F);
+            searchButton.setMinimumSize(new java.awt.Dimension(24, 24));
+            searchButton.setPreferredSize(new java.awt.Dimension(32, 32));
+            searchButton.setMaximumSize(new java.awt.Dimension(32, 32));
+            searchButton.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+
+                    // search combo box near button (must be only one combo in panel)
+                    JButton button = (JButton) evt.getSource();
+                    JComboBox combo = findComboInComponent(button.getParent());
+
+                    if (combo != null) {
+                        FastSearchUtil.showFastSearchForStringComboBox(combo, "Select value");
+                    }
+                }
+            });
+            setPanel.add(searchButton);
         }
         this.pack();
         this.revalidate();
         this.repaint();
     }
 
-    private void packActionPerformed(java.awt.event.ActionEvent evt) {
-        boolean start = false;
-        int selectedIndex = 0;
-        for (JComboBox pack : packs) {
-            if (!start) {
-                if (evt.getSource().equals(pack)) {
-                    start = true;
-                    selectedIndex = pack.getSelectedIndex();
-                }
-            } else {
-                pack.setSelectedIndex(selectedIndex);
+    private JComboBox findComboInComponent(Container panel) {
+        // search combo box near button (must be only one combo in panel)
+        JComboBox combo = null;
+        for (Component comp : panel.getComponents()) {
+            if (comp instanceof JComboBox) {
+                combo = (JComboBox) comp;
+                break;
             }
+        }
+        return combo;
+    }
+
+    private void packActionPerformed(java.awt.event.ActionEvent evt) {
+        // fill all bottom combobox with same value
+        JComboBox curentCombo = (JComboBox) evt.getSource();
+        int newValue = curentCombo.getSelectedIndex();
+
+        // search start index
+        int startIndex = 0;
+        for (int i = 0; i < packPanels.size(); i++) {
+            JComboBox pack = findComboInComponent(packPanels.get(i));
+            if (pack.equals(curentCombo)) {
+                startIndex = i + 1;
+                break;
+            }
+        }
+
+        // change all from start index
+        for (int i = startIndex; i < packPanels.size(); i++) {
+            JComboBox pack = findComboInComponent(packPanels.get(i));
+            pack.setSelectedIndex(newValue);
         }
     }
 
@@ -1044,6 +1093,7 @@ public class NewTournamentDialog extends MageDialog {
             }
         }
         this.cbAllowSpectators.setSelected(PreferencesDialog.getCachedValue(PreferencesDialog.KEY_NEW_TOURNAMENT_ALLOW_SPECTATORS + versionStr, "Yes").equals("Yes"));
+        this.cbPlaneChase.setSelected(PreferencesDialog.getCachedValue(PreferencesDialog.KEY_NEW_TOURNAMENT_PLANE_CHASE + versionStr, "No").equals("Yes"));
         this.chkRollbackTurnsAllowed.setSelected(PreferencesDialog.getCachedValue(PreferencesDialog.KEY_NEW_TOURNAMENT_ALLOW_ROLLBACKS + versionStr, "Yes").equals("Yes"));
         this.chkRated.setSelected(PreferencesDialog.getCachedValue(PreferencesDialog.KEY_NEW_TOURNAMENT_RATED + versionStr, "No").equals("Yes"));
     }
@@ -1054,16 +1104,22 @@ public class NewTournamentDialog extends MageDialog {
             int packNumber = 0;
             for (String pack : packsArray) {
                 packNumber++;
-                if (this.packs.size() >= packNumber - 1) {
-                    JComboBox comboBox = this.packs.get(packNumber - 1);
-                    ComboBoxModel model = comboBox.getModel();
-                    int size = model.getSize();
-                    for (int i = 0; i < size; i++) {
-                        ExpansionInfo element = (ExpansionInfo) model.getElementAt(i);
-                        if (element.getCode().equals(pack.trim())) {
-                            comboBox.setSelectedIndex(i);
-                            break;
+                if (this.packPanels.size() >= packNumber - 1) {
+                    JPanel panel = packPanels.get(packNumber - 1);
+                    JComboBox comboBox = findComboInComponent(panel);
+
+                    if (comboBox != null) {
+                        ComboBoxModel model = comboBox.getModel();
+                        int size = model.getSize();
+                        for (int i = 0; i < size; i++) {
+                            ExpansionInfo element = (ExpansionInfo) model.getElementAt(i);
+                            if (element.getCode().equals(pack.trim())) {
+                                comboBox.setSelectedIndex(i);
+                                break;
+                            }
                         }
+                    } else {
+                        logger.error("Can't find combo component in " + panel.toString());
                     }
                 }
 
@@ -1123,6 +1179,7 @@ public class NewTournamentDialog extends MageDialog {
             }
         }
         PreferencesDialog.saveValue(PreferencesDialog.KEY_NEW_TOURNAMENT_ALLOW_SPECTATORS + versionStr, (tOptions.isWatchingAllowed() ? "Yes" : "No"));
+        PreferencesDialog.saveValue(PreferencesDialog.KEY_NEW_TOURNAMENT_PLANE_CHASE + versionStr, (tOptions.isPlaneChase() ? "Yes" : "No"));
         PreferencesDialog.saveValue(PreferencesDialog.KEY_NEW_TOURNAMENT_ALLOW_ROLLBACKS + versionStr, (tOptions.getMatchOptions().isRollbackTurnsAllowed() ? "Yes" : "No"));
         PreferencesDialog.saveValue(PreferencesDialog.KEY_NEW_TOURNAMENT_RATED + versionStr, (tOptions.getMatchOptions().isRated() ? "Yes" : "No"));
     }
@@ -1137,6 +1194,7 @@ public class NewTournamentDialog extends MageDialog {
     private javax.swing.JButton btnSavedConfiguration1;
     private javax.swing.JButton btnSavedConfiguration2;
     private javax.swing.JCheckBox cbAllowSpectators;
+    private javax.swing.JCheckBox cbPlaneChase;
     private javax.swing.JComboBox cbDeckType;
     private javax.swing.JComboBox cbDraftCube;
     private javax.swing.JComboBox cbDraftTiming;
@@ -1197,7 +1255,7 @@ class DeckFilter extends FileFilter {
         int i = s.lastIndexOf('.');
 
         if (i > 0 && i < s.length() - 1) {
-            ext = s.substring(i + 1).toLowerCase();
+            ext = s.substring(i + 1).toLowerCase(Locale.ENGLISH);
         }
         return (ext == null) ? false : ext.equals("dck");
     }

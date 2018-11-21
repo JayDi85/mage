@@ -625,9 +625,7 @@ public abstract class CardPanel extends MagePermanent implements MouseListener, 
         if (gameCard.hideInfo()) {
             return;
         }
-        if (this.contains(e.getPoint())) {
-            return;
-        }
+        
         if (tooltipShowing) {
             synchronized (this) {
                 if (tooltipShowing) {
@@ -802,7 +800,7 @@ public abstract class CardPanel extends MagePermanent implements MouseListener, 
         // this update removes the isChoosable mark from targetCardsInLibrary
         // so only done for permanents because it's needed to redraw counters in different size, if window size was changed
         // no perfect solution yet (maybe also other not wanted effects for PermanentView objects)
-        if (updateCard != null && (updateCard instanceof PermanentView)) {
+        if ((updateCard instanceof PermanentView)) {
             update(updateCard);
         }
     }

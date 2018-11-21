@@ -19,12 +19,13 @@ import mage.game.events.DamagedPlayerEvent;
 import mage.game.events.GameEvent;
 import mage.game.events.GameEvent.EventType;
 import mage.game.permanent.Permanent;
+import mage.game.permanent.token.TokenImpl;
 import mage.game.permanent.token.Token;
 
 /**
  * @author Loki
  */
-public class AkkiLavarunner extends CardImpl {
+public final class AkkiLavarunner extends CardImpl {
 
     public AkkiLavarunner(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId,setInfo,new CardType[]{CardType.CREATURE},"{3}{R}");
@@ -84,7 +85,7 @@ class AkkiLavarunnerAbility extends TriggeredAbilityImpl {
     }
 }
 
-class TokTokVolcanoBorn extends Token {
+class TokTokVolcanoBorn extends TokenImpl {
     TokTokVolcanoBorn() {
         super("Tok-Tok, Volcano Born", "");
         addSuperType(SuperType.LEGENDARY);
@@ -96,6 +97,13 @@ class TokTokVolcanoBorn extends Token {
         toughness = new MageInt(2);
         this.addAbility(ProtectionAbility.from(ObjectColor.RED));
         this.addAbility(new SimpleStaticAbility(Zone.BATTLEFIELD, new TokTokVolcanoBornEffect()));
+    }
+    public TokTokVolcanoBorn(final TokTokVolcanoBorn token) {
+        super(token);
+    }
+
+    public TokTokVolcanoBorn copy() {
+        return new TokTokVolcanoBorn(this);
     }
 }
 

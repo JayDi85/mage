@@ -1,30 +1,4 @@
-/*
- *  Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without modification, are
- *  permitted provided that the following conditions are met:
- *
- *     1. Redistributions of source code must retain the above copyright notice, this list of
- *        conditions and the following disclaimer.
- *
- *     2. Redistributions in binary form must reproduce the above copyright notice, this list
- *        of conditions and the following disclaimer in the documentation and/or other materials
- *        provided with the distribution.
- *
- *  THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- *  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  The views and conclusions contained in the software and documentation are those of the
- *  authors and should not be interpreted as representing official policies, either expressed
- *  or implied, of BetaSteward_at_googlemail.com.
- */
+
 package org.mage.test.cards.cost.splitcards;
 
 import mage.constants.PhaseStep;
@@ -48,7 +22,7 @@ public class CastSplitCardsFromOtherZonesTest extends CardTestPlayerBase {
     @Test
     public void testCastTearFromOpponentsHand() {
         addCard(Zone.BATTLEFIELD, playerA, "Mountain", 5);
-        // When Mindclaw Shaman enters the battlefield, target opponent reveals his or her hand.
+        // When Mindclaw Shaman enters the battlefield, target opponent reveals their hand.
         // You may cast an instant or sorcery card from it without paying its mana cost.
         addCard(Zone.HAND, playerA, "Mindclaw Shaman"); // Creature {4}{R}
 
@@ -74,7 +48,7 @@ public class CastSplitCardsFromOtherZonesTest extends CardTestPlayerBase {
     @Test
     public void testCastFearFromOpponentsHand() {
         addCard(Zone.BATTLEFIELD, playerA, "Mountain", 5);
-        // When Mindclaw Shaman enters the battlefield, target opponent reveals his or her hand.
+        // When Mindclaw Shaman enters the battlefield, target opponent reveals their hand.
         // You may cast an instant or sorcery card from it without paying its mana cost.
         addCard(Zone.HAND, playerA, "Mindclaw Shaman"); // Creature {4}{R}
 
@@ -100,7 +74,7 @@ public class CastSplitCardsFromOtherZonesTest extends CardTestPlayerBase {
     @Test
     public void testCastFusedFromOpponentsHand() {
         addCard(Zone.BATTLEFIELD, playerA, "Mountain", 5);
-        // When Mindclaw Shaman enters the battlefield, target opponent reveals his or her hand.
+        // When Mindclaw Shaman enters the battlefield, target opponent reveals their hand.
         // You may cast an instant or sorcery card from it without paying its mana cost.
         addCard(Zone.HAND, playerA, "Mindclaw Shaman"); // Creature {4}{R}
 
@@ -123,5 +97,36 @@ public class CastSplitCardsFromOtherZonesTest extends CardTestPlayerBase {
         assertGraveyardCount(playerB, "Sanguine Bond", 1);
         assertGraveyardCount(playerB, "Icy Manipulator", 1);
 
+    }
+
+    /**
+     * Cast a split card half from exile
+     */
+    @Test
+    public void testCastSpliHalfFromExile() {
+        // Fire Instant {1}{R}
+        // Fire deals 2 damage divided as you choose among one or two target creatures and/or players.
+        // Ice Instant {1}{U}
+        // Tap target permanent.
+        // Draw a card.
+        addCard(Zone.LIBRARY, playerA, "Fire // Ice", 1);
+        skipInitShuffling();
+        addCard(Zone.BATTLEFIELD, playerA, "Silvercoat Lion"); // Creature 2/2
+
+        // Whenever Etali, Primal Storm attacks, exile the top card of each player's library, then you may
+        // cast any number of nonland cards exiled this way without paying their mana costs.
+        addCard(Zone.BATTLEFIELD, playerB, "Etali, Primal Storm"); // Creature {4}{R} 6/6
+
+        attack(2, playerB, "Etali, Primal Storm");
+        setChoice(playerB, "Yes");
+        setChoice(playerB, "Cast Fire");
+        addTarget(playerB, "Silvercoat Lion");
+
+        setStopAt(2, PhaseStep.END_COMBAT);
+        execute();
+
+        assertLife(playerA, 14);
+        assertGraveyardCount(playerA, "Silvercoat Lion", 1);
+        assertGraveyardCount(playerA, "Fire // Ice", 1);
     }
 }

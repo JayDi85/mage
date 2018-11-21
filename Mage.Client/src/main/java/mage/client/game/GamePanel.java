@@ -1,30 +1,4 @@
-/*
- * Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
- *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.client.game;
 
 import mage.cards.Card;
@@ -791,7 +765,7 @@ public final class GamePanel extends javax.swing.JPanel {
             if (!exiles.containsKey(exile.getId())) {
                 CardInfoWindowDialog newExile = new CardInfoWindowDialog(ShowType.EXILE, exile.getName());
                 exiles.put(exile.getId(), newExile);
-                MageFrame.getDesktop().add(newExile, JLayeredPane.MODAL_LAYER);
+                MageFrame.getDesktop().add(newExile, JLayeredPane.PALETTE_LAYER);
                 newExile.show();
             }
             exiles.get(exile.getId()).loadCards(exile, bigCard, gameId);
@@ -1004,7 +978,7 @@ public final class GamePanel extends javax.swing.JPanel {
         }
         CardInfoWindowDialog newGraveyard = new CardInfoWindowDialog(ShowType.GRAVEYARD, playerName);
         graveyardWindows.put(playerName, newGraveyard);
-        MageFrame.getDesktop().add(newGraveyard, JLayeredPane.MODAL_LAYER);
+        MageFrame.getDesktop().add(newGraveyard, JLayeredPane.PALETTE_LAYER);
         newGraveyard.loadCards(graveyards.get(playerName), bigCard, gameId, false);
     }
 
@@ -1039,7 +1013,7 @@ public final class GamePanel extends javax.swing.JPanel {
         if (!windowMap.containsKey(name)) {
             cardInfoWindowDialog = new CardInfoWindowDialog(showType, name);
             windowMap.put(name, cardInfoWindowDialog);
-            MageFrame.getDesktop().add(cardInfoWindowDialog, JLayeredPane.MODAL_LAYER);
+            MageFrame.getDesktop().add(cardInfoWindowDialog, JLayeredPane.PALETTE_LAYER);
         } else {
             cardInfoWindowDialog = windowMap.get(name);
         }
@@ -1064,7 +1038,7 @@ public final class GamePanel extends javax.swing.JPanel {
 
     public void ask(String question, GameView gameView, int messageId, Map<String, Serializable> options) {
         updateGame(gameView);
-        this.feedbackPanel.getFeedback(FeedbackMode.QUESTION, question, false, options, messageId);
+        this.feedbackPanel.getFeedback(FeedbackMode.QUESTION, question, false, options, messageId, true, gameView.getPhase());
     }
 
     /**
@@ -1113,19 +1087,19 @@ public final class GamePanel extends javax.swing.JPanel {
             dialog = showCards(message, cardView, required, options0, popupMenuType);
             options0.put("dialog", dialog);
         }
-        this.feedbackPanel.getFeedback(required ? FeedbackMode.INFORM : FeedbackMode.CANCEL, message, gameView.getSpecial(), options0, messageId);
+        this.feedbackPanel.getFeedback(required ? FeedbackMode.INFORM : FeedbackMode.CANCEL, message, gameView.getSpecial(), options0, messageId, true, gameView.getPhase());
         if (dialog != null) {
-            this.pickTarget.add(dialog);
+            this.pickTarget.add(dialog); // TODO: 01.01.2018, JayDi85: why feedbackPanel saved to pickTarget list? Need to research
         }
     }
 
     public void inform(String information, GameView gameView, int messageId) {
         updateGame(gameView);
-        this.feedbackPanel.getFeedback(FeedbackMode.INFORM, information, gameView.getSpecial(), null, messageId);
+        this.feedbackPanel.getFeedback(FeedbackMode.INFORM, information, gameView.getSpecial(), null, messageId, false, gameView.getPhase());
     }
 
     public void endMessage(String message, int messageId) {
-        this.feedbackPanel.getFeedback(FeedbackMode.END, message, false, null, messageId);
+        this.feedbackPanel.getFeedback(FeedbackMode.END, message, false, null, messageId, true, null);
         ArrowBuilder.getBuilder().removeAllArrows(gameId);
     }
 
@@ -1168,19 +1142,19 @@ public final class GamePanel extends javax.swing.JPanel {
             priorityPlayerText = " / priority " + gameView.getPriorityPlayerName();
         }
         String messageToDisplay = message + FeedbackPanel.getSmallText(activePlayerText + " / " + gameView.getStep().toString() + priorityPlayerText);
-        this.feedbackPanel.getFeedback(FeedbackMode.SELECT, messageToDisplay, gameView.getSpecial(), panelOptions, messageId);
+        this.feedbackPanel.getFeedback(FeedbackMode.SELECT, messageToDisplay, gameView.getSpecial(), panelOptions, messageId, true, gameView.getPhase());
     }
 
     public void playMana(String message, GameView gameView, Map<String, Serializable> options, int messageId) {
         updateGame(gameView);
         DialogManager.getManager(gameId).fadeOut();
-        this.feedbackPanel.getFeedback(FeedbackMode.CANCEL, message, gameView.getSpecial(), options, messageId);
+        this.feedbackPanel.getFeedback(FeedbackMode.CANCEL, message, gameView.getSpecial(), options, messageId, true, gameView.getPhase());
     }
 
     public void playXMana(String message, GameView gameView, int messageId) {
         updateGame(gameView);
         DialogManager.getManager(gameId).fadeOut();
-        this.feedbackPanel.getFeedback(FeedbackMode.CONFIRM, message, gameView.getSpecial(), null, messageId);
+        this.feedbackPanel.getFeedback(FeedbackMode.CONFIRM, message, gameView.getSpecial(), null, messageId, true, gameView.getPhase());
     }
 
     public void replayMessage(String message) {
@@ -1220,14 +1194,17 @@ public final class GamePanel extends javax.swing.JPanel {
 
     public void getChoice(Choice choice, UUID objectId) {
         hideAll();
+        // TODO: remember last choices and search incremental for same events?
         PickChoiceDialog pickChoice = new PickChoiceDialog();
         pickChoice.showDialog(choice, objectId, choiceWindowState);
         if (choice.isKeyChoice()) {
+            SessionHandler.sendPlayerString(gameId, choice.getChoiceKey());
+            /* // old code, auto complete was for auto scripting?
             if (pickChoice.isAutoSelect()) {
                 SessionHandler.sendPlayerString(gameId, '#' + choice.getChoiceKey());
             } else {
                 SessionHandler.sendPlayerString(gameId, choice.getChoiceKey());
-            }
+            }*/
         } else {
             SessionHandler.sendPlayerString(gameId, choice.getChoice());
         }

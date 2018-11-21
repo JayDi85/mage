@@ -13,7 +13,7 @@ import mage.constants.CardType;
 import mage.constants.SubType;
 import mage.counters.CounterType;
 
-public class AmmitEternal extends CardImpl {
+public final class AmmitEternal extends CardImpl {
 
     public AmmitEternal(UUID ownerId, CardSetInfo cardSetInfo) {
         super(ownerId, cardSetInfo, new CardType[]{CardType.CREATURE}, "{2}{B}");
@@ -25,7 +25,7 @@ public class AmmitEternal extends CardImpl {
 
         // Afflict 3 (Whenever this creature becomes blocked, defending player loses 3 life.)
         this.addAbility(new AfflictAbility(3));
-        
+
         // Whenever an opponent casts a spell, put a -1/-1 counter on Ammit Eternal.
         this.addAbility(new SpellCastOpponentTriggeredAbility(new AddCountersSourceEffect(CounterType.M1M1.createInstance()), false));
 
@@ -37,6 +37,7 @@ public class AmmitEternal extends CardImpl {
         super(ammitEternal);
     }
 
+    @Override
     public AmmitEternal copy() {
         return new AmmitEternal(this);
     }

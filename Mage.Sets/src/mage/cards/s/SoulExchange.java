@@ -1,32 +1,7 @@
-/*
- *  Copyright 2010 BetaSteward_at_googlemail.com. All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without modification, are
- *  permitted provided that the following conditions are met:
- *
- *     1. Redistributions of source code must retain the above copyright notice, this list of
- *        conditions and the following disclaimer.
- *
- *     2. Redistributions in binary form must reproduce the above copyright notice, this list
- *        of conditions and the following disclaimer in the documentation and/or other materials
- *        provided with the distribution.
- *
- *  THIS SOFTWARE IS PROVIDED BY BetaSteward_at_googlemail.com ``AS IS'' AND ANY EXPRESS OR IMPLIED
- *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BetaSteward_at_googlemail.com OR
- *  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- *  ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *  The views and conclusions contained in the software and documentation are those of the
- *  authors and should not be interpreted as representing official policies, either expressed
- *  or implied, of BetaSteward_at_googlemail.com.
- */
+
 package mage.cards.s;
 
+import java.util.UUID;
 import mage.abilities.Ability;
 import mage.abilities.costs.Cost;
 import mage.abilities.costs.common.ExileTargetCost;
@@ -38,18 +13,16 @@ import mage.constants.CardType;
 import mage.constants.Outcome;
 import mage.constants.SubType;
 import mage.counters.CounterType;
-import mage.filter.common.FilterCreatureCard;
+import mage.filter.StaticFilters;
 import mage.game.Game;
 import mage.game.permanent.Permanent;
 import mage.target.common.TargetCardInYourGraveyard;
 import mage.target.common.TargetControlledCreaturePermanent;
 
-import java.util.UUID;
-
 /**
  * @author MarcoMarin
  */
-public class SoulExchange extends CardImpl {
+public final class SoulExchange extends CardImpl {
 
     public SoulExchange(UUID ownerId, CardSetInfo setInfo) {
         super(ownerId, setInfo, new CardType[]{CardType.SORCERY}, "{B}{B}");
@@ -58,7 +31,7 @@ public class SoulExchange extends CardImpl {
         Cost cost = new ExileTargetCost(new TargetControlledCreaturePermanent());
         this.getSpellAbility().addCost(cost);
         // Return target creature card from your graveyard to the battlefield. Put a +2/+2 counter on that creature if the exiled creature was a Thrull.
-        this.getSpellAbility().addTarget(new TargetCardInYourGraveyard(new FilterCreatureCard("creature card from your graveyard")));
+        this.getSpellAbility().addTarget(new TargetCardInYourGraveyard(StaticFilters.FILTER_CARD_CREATURE_YOUR_GRAVEYARD));
         this.getSpellAbility().addEffect(new SoulExchangeEffect());
 
     }
@@ -92,10 +65,12 @@ class SoulExchangeEffect extends OneShotEffect {
     @Override
     public boolean apply(Game game, Ability source) {
         ReturnFromGraveyardToBattlefieldTargetEffect effect = new ReturnFromGraveyardToBattlefieldTargetEffect();
-        if (!effect.apply(game, source)) return false;
+        if (!effect.apply(game, source)) {
+            return false;
+        }
 
         for (Cost c : source.getCosts()) {
-         /*   if (!c.getTargets().isEmpty()){
+            /*   if (!c.getTargets().isEmpty()){
                 UUID t = c.getTargets().getFirstTarget();
                 Permanent exiled = game.getPermanentOrLKIBattlefield(t);*/
             if (c.isPaid() && c instanceof ExileTargetCost) {
@@ -105,7 +80,9 @@ class SoulExchangeEffect extends OneShotEffect {
                             game.getPermanent(source.getFirstTarget()).addCounters(CounterType.P2P2.createInstance(), source, game);
                             return true;
                         }
-                    } else return false;
+                    } else {
+                        return false;
+                    }
                 }
             }
         }
