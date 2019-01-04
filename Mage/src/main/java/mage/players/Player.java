@@ -1,7 +1,5 @@
 package mage.players;
 
-import java.io.Serializable;
-import java.util.*;
 import mage.MageItem;
 import mage.MageObject;
 import mage.MageObjectReference;
@@ -38,6 +36,9 @@ import mage.target.TargetAmount;
 import mage.target.TargetCard;
 import mage.target.common.TargetCardInLibrary;
 import mage.util.Copyable;
+
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * @author BetaSteward_at_googlemail.com
@@ -83,6 +84,8 @@ public interface Player extends MageItem, Copyable<Player> {
     int gainLife(int amount, Game game, Ability source);
 
     int gainLife(int amount, Game game, UUID sourceId);
+
+    int damage(int damage, UUID sourceId, Game game);
 
     int damage(int damage, UUID sourceId, Game game, boolean combatDamage, boolean preventable);
 
@@ -348,6 +351,15 @@ public interface Player extends MageItem, Copyable<Player> {
      * @return true if search was successful
      */
     boolean searchLibrary(TargetCardInLibrary target, Game game, UUID targetPlayerId, boolean triggerEvents);
+
+    /**
+     * Reveals all players' libraries. Useful for abilities like Jace, Architect of Thought's -8
+     * that have effects that require information from all libraries.
+     * @param source
+     * @param game
+     * @return
+     */
+    void lookAtAllLibraries(Ability source, Game game);
 
     boolean canPlayLand();
 

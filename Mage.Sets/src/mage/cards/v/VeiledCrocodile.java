@@ -67,7 +67,10 @@ class VeiledCrocodileStateTriggeredAbility extends StateTriggeredAbility {
 
     @Override
     public boolean checkInterveningIfClause(Game game) {
-        return this.getSourcePermanentIfItStillExists(game).getCardType().contains(CardType.ENCHANTMENT);
+        if (getSourcePermanentIfItStillExists(game) != null) {
+            return getSourcePermanentIfItStillExists(game).isEnchantment();
+        }
+        return false;
     }
 
     @Override
@@ -102,7 +105,7 @@ class VeiledCrocodileStateTriggeredAbility extends StateTriggeredAbility {
 
     @Override
     public String getRule() {
-        return new StringBuilder("When a player has no cards in hand, if {this} is an enchantment, ").append(super.getRule()).toString();
+        return "When a player has no cards in hand, if {this} is an enchantment, " + super.getRule();
     }
 
 }

@@ -54,12 +54,18 @@ class OpalAvengerStateTriggeredAbility extends StateTriggeredAbility {
 
     @Override
     public boolean checkTrigger(GameEvent event, Game game) {
-        return game.getState().getPlayer(getControllerId()).getLife() <= 10;
+        if (game.getState().getPlayer(getControllerId()) != null) {
+            return game.getState().getPlayer(getControllerId()).getLife() <= 10;
+        }
+        return false;
     }
 
     @Override
     public boolean checkInterveningIfClause(Game game) {
-        return this.getSourcePermanentIfItStillExists(game).getCardType().contains(CardType.ENCHANTMENT);
+        if (getSourcePermanentIfItStillExists(game) != null) {
+            return getSourcePermanentIfItStillExists(game).isEnchantment();
+        }
+        return false;
     }
 
     @Override
@@ -94,7 +100,7 @@ class OpalAvengerStateTriggeredAbility extends StateTriggeredAbility {
 
     @Override
     public String getRule() {
-        return new StringBuilder("When you have 10 or less life, if {this} is an enchantment, ").append(super.getRule()).toString();
+        return "When you have 10 or less life, if {this} is an enchantment, " + super.getRule();
     }
 
 }

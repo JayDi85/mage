@@ -139,6 +139,11 @@ public class PlayerStub implements Player {
     }
 
     @Override
+    public int damage(int damage, UUID sourceId, Game game) {
+        return 0;
+    }
+
+    @Override
     public int damage(int damage, UUID sourceId, Game game, boolean combatDamage, boolean preventable) {
         return 0;
     }
@@ -595,6 +600,10 @@ public class PlayerStub implements Player {
     @Override
     public boolean searchLibrary(TargetCardInLibrary target, Game game, UUID targetPlayerId, boolean triggerEvents) {
         return false;
+    }
+
+    @Override
+    public void lookAtAllLibraries(Ability source, Game game) {
     }
 
     @Override
