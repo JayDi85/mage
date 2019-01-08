@@ -56,11 +56,11 @@ class AllPlayersLostLifeCount implements DynamicValue {
     }
 
     public int calculate(Game game, UUID controllerId) {
-        PlayerLostLifeWatcher watcher = (PlayerLostLifeWatcher) game.getState().getWatchers().get(PlayerLostLifeWatcher.class.getSimpleName());
+        PlayerLostLifeWatcher watcher = game.getState().getWatcher(PlayerLostLifeWatcher.class);
         if (watcher != null) {
             int amountLifeLost = 0;
             for (UUID playerId : game.getState().getPlayersInRange(controllerId, game)) {
-                amountLifeLost += watcher.getLiveLost(playerId);
+                amountLifeLost += watcher.getLifeLost(playerId);
             }
             return amountLifeLost;
         }

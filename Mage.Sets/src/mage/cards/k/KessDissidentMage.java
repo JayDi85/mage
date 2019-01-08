@@ -93,8 +93,8 @@ class KessDissidentMageCastFromGraveyardEffect extends AsThoughEffectImpl {
             if (card != null && (card.isInstant() || card.isSorcery())
                     && game.getState().getZone(objectId).equals(Zone.GRAVEYARD)) {
                 // check if not already a card was cast this turn with this ability
-                KessDissidentMageWatcher watcher = (KessDissidentMageWatcher) game.getState().getWatchers().get(KessDissidentMageWatcher.class.getSimpleName());
-                return !watcher.isAbilityUsed(new MageObjectReference(source.getSourceId(), game));
+                KessDissidentMageWatcher watcher = game.getState().getWatcher(KessDissidentMageWatcher.class);
+                return watcher != null && !watcher.isAbilityUsed(new MageObjectReference(source.getSourceId(), game));
             }
         }
         return false;
@@ -137,8 +137,8 @@ class KessDissidentMageReplacementEffect extends ReplacementEffectImpl {
     public boolean applies(GameEvent event, Ability source, Game game) {
         ZoneChangeEvent zEvent = (ZoneChangeEvent) event;
         if (zEvent.getToZone() == Zone.GRAVEYARD) {
-            KessDissidentMageWatcher watcher = (KessDissidentMageWatcher) game.getState().getWatchers().get(KessDissidentMageWatcher.class.getSimpleName());
-            if (source.getSourceId().equals(watcher.spellCastWasAllowedBy(new MageObjectReference(event.getTargetId(), game)))) {
+            KessDissidentMageWatcher watcher = game.getState().getWatcher(KessDissidentMageWatcher.class);
+            if (watcher != null && source.getSourceId().equals(watcher.spellCastWasAllowedBy(new MageObjectReference(event.getTargetId(), game)))) {
                 return true;
             }
         }
@@ -153,7 +153,7 @@ class KessDissidentMageWatcher extends Watcher {
     private final Map<MageObjectReference, UUID> castSpells = new HashMap<>();
 
     KessDissidentMageWatcher() {
-        super(KessDissidentMageWatcher.class.getSimpleName(), WatcherScope.GAME);
+        super(KessDissidentMageWatcher.class, WatcherScope.GAME);
     }
 
     KessDissidentMageWatcher(final KessDissidentMageWatcher watcher) {

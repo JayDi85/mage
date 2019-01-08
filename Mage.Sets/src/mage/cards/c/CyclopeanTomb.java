@@ -30,10 +30,7 @@ import mage.target.common.TargetLandPermanent;
 import mage.target.targetpointer.FixedTarget;
 import mage.watchers.Watcher;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author MTGfan
@@ -60,7 +57,7 @@ public final class CyclopeanTomb extends CardImpl {
         this.addAbility(new PutIntoGraveFromBattlefieldSourceTriggeredAbility(new CyclopeanTombCreateTriggeredEffect()));
     }
 
-    public CyclopeanTomb(final CyclopeanTomb card) {
+    private CyclopeanTomb(final CyclopeanTomb card) {
         super(card);
     }
 
@@ -72,12 +69,12 @@ public final class CyclopeanTomb extends CardImpl {
 
 class BecomeSwampEffect extends BecomesBasicLandTargetEffect {
 
-    public BecomeSwampEffect(Duration duration, boolean chooseLandType, boolean loseOther, SubType... landNames) {
+    BecomeSwampEffect(Duration duration, boolean chooseLandType, boolean loseOther, SubType... landNames) {
         super(duration, chooseLandType, loseOther, landNames);
         staticText = "That land is a Swamp for as long as it has a mire counter on it";
     }
 
-    public BecomeSwampEffect(final BecomeSwampEffect effect) {
+    private BecomeSwampEffect(final BecomeSwampEffect effect) {
         super(effect);
     }
 
@@ -102,12 +99,12 @@ class BecomeSwampEffect extends BecomesBasicLandTargetEffect {
 
 class CyclopeanTombCreateTriggeredEffect extends OneShotEffect {
 
-    public CyclopeanTombCreateTriggeredEffect() {
+    CyclopeanTombCreateTriggeredEffect() {
         super(Outcome.Benefit);
         this.staticText = "at the beginning of each of your upkeeps for the rest of the game, remove all mire counters from a land that a mire counter was put onto with {this} but that a mire counter has not been removed from with {this}";
     }
 
-    public CyclopeanTombCreateTriggeredEffect(final CyclopeanTombCreateTriggeredEffect effect) {
+    private CyclopeanTombCreateTriggeredEffect(final CyclopeanTombCreateTriggeredEffect effect) {
         super(effect);
     }
 
@@ -133,12 +130,12 @@ class CyclopeanTombCreateTriggeredEffect extends OneShotEffect {
 
 class CyclopeanTombEffect extends OneShotEffect {
 
-    public CyclopeanTombEffect() {
+    CyclopeanTombEffect() {
         super(Outcome.Benefit);
         this.staticText = "At the beginning of each of your upkeeps for the rest of the game, remove all mire counters from a land that a mire counter was put onto with {this} but that a mire counter has not been removed from with {this}";
     }
 
-    public CyclopeanTombEffect(final CyclopeanTombEffect effect) {
+    private CyclopeanTombEffect(final CyclopeanTombEffect effect) {
         super(effect);
     }
 
@@ -151,7 +148,7 @@ class CyclopeanTombEffect extends OneShotEffect {
     public boolean apply(Game game, Ability source) {
         Player controller = game.getPlayer(source.getControllerId());
         MageObjectReference mor = new MageObjectReference(source.getSourceId(), source.getSourceObjectZoneChangeCounter(), game);
-        CyclopeanTombCounterWatcher watcher = (CyclopeanTombCounterWatcher) game.getState().getWatchers().get(CyclopeanTombCounterWatcher.class.getSimpleName());
+        CyclopeanTombCounterWatcher watcher = game.getState().getWatcher(CyclopeanTombCounterWatcher.class);
         if (controller != null && watcher != null) {
 
             Set<MageObjectReference> landRef = watcher.landMiredByCyclopeanTombInstance(mor, game);
@@ -190,13 +187,13 @@ class CyclopeanTombEffect extends OneShotEffect {
 
 class CyclopeanTombCounterWatcher extends Watcher {
 
-    public HashMap<MageObjectReference, Set<MageObjectReference>> counterData = new HashMap<>();
+    private final Map<MageObjectReference, Set<MageObjectReference>> counterData = new HashMap<>();
 
-    public CyclopeanTombCounterWatcher() {
+    CyclopeanTombCounterWatcher() {
         super(CyclopeanTombCounterWatcher.class.getSimpleName(), WatcherScope.GAME);
     }
 
-    public CyclopeanTombCounterWatcher(final CyclopeanTombCounterWatcher watcher) {
+    private CyclopeanTombCounterWatcher(final CyclopeanTombCounterWatcher watcher) {
         super(watcher);
         for (MageObjectReference mageObjectReference : watcher.counterData.keySet()) {
             Set<MageObjectReference> miredLands = new HashSet<>();
@@ -227,11 +224,6 @@ class CyclopeanTombCounterWatcher extends Watcher {
             }
 
         }
-    }
-
-    @Override
-    public void reset() {
-        super.reset();
     }
 
     public Set<MageObjectReference> landMiredByCyclopeanTombInstance(MageObjectReference mor, Game game) {
